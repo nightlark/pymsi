@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymsi"
+authors = [
+    {name = "Ryan Mast", email = "mast.ryan@gmail.com"},
+]
+maintainers = [
+    {name = "Ryan Mast", email = "mast.ryan@gmail.com"},
+]
+description = "A pure Python library for reading and manipulating Windows Installer (MSI) files. Based on the rust msi crate and msitools utilities"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["pe", "installer", "ole", "msi"]
+license = {text = "MIT License"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Software Development",
+    "Topic :: System",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "olefile",
+    "click",
+    "loguru"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+dev = ["build", "pre-commit"]
+docs = ["sphinx", "myst-parser"]
+
+[project.scripts]
+
+[project.urls]
+Homepage = "https://github.com/nightlark/pymsi"
+Discussions = "https://github.com/nightlark/pymsi/discussions"
+Documentation = "https://pymsi.readthedocs.io/en/latest/"
+"Issue Tracker" = "https://github.com/nightlark/pymsi/issues"
+"Source Code" = "https://github.com/nightlark/pymsi"
+
+[tool.setuptools_scm]
+version_file = "src/pymsi/_version.py"
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+pythonpath = "src"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.lint]
+# ruff defaults: E4, E7, E9, F
+select = ["E", "F", "B", "I"]
+ignore = ["E501", "F841"]
+# don't fix flake8-bugbear (`B`) violations
+unfixable = ["B"]
+

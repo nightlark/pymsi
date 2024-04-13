@@ -1,3 +1,6 @@
+# Ignore setuptools_scm _version.py file
+_version.py
+
 # From https://github.com/github/gitignore/blob/main/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
