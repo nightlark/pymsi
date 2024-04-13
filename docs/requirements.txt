@@ -1,0 +1,9 @@
+sphinx
+myst-parser
+#sphinx_rtd_theme==1.0.0
+#ipython==7.31.1
+#ipykernel==6.4.2
+#breathe==4.31.0
+#sphinxcontrib-svg2pdfconverter==1.1.1
+#requests==2.31.0
+#sphinxcontrib-mermaid==0.8.1
