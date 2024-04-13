@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Community Support
+    url: https://github.com/nightlark/pymsi/discussions
+    about: Please ask and answer questions here.
+  - name: Security Bugs
+    url: https://github.com/nightlark/pymsi/security
+    about: Please report security vulnerabilities here.
