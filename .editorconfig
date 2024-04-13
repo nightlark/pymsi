@@ -1,0 +1,19 @@
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines
+[*]
+end_of_line = lf
+
+# 4 space indentation
+[*.py]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+charset = utf-8
+
+# Indentation for YAML files for GitHub Actions workflows
+[.github/workflows/*.yml]
+indent_style = space
+indent_size = 2
+
