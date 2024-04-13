@@ -11,4 +11,3 @@ If merged this pull request will
 ### Proposed changes
 
 <!-- Describe the highlights of the proposed changes here -->
-

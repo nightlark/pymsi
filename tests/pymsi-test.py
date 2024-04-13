@@ -1,12 +1,11 @@
 import olefile
-import io
 import pymsi
 
-ole = olefile.OleFileIO('test.msi')
+ole = olefile.OleFileIO("test.msi")
 
 # Decode all the stream names in the OLE file
 for k in ole.root.kids:
-	print(pymsi.decode_streamname_unicode(k.name))
+    print(pymsi.decode_streamname_unicode(k.name))
 
 ##########################################################################
 
@@ -37,7 +36,7 @@ while len(nextbytes) == 4:
         strlen += int.from_bytes(nextbytes[:2], byteorder="little")
         strrefcnt = int.from_bytes(nextbytes[2:4], byteorder="little")
 
-    print(str(strdata[stroffset:stroffset+strlen]))
+    print(str(strdata[stroffset : stroffset + strlen]))
     print(f"len:{strlen} refcnt:{strrefcnt}")
 
     stroffset += strlen
@@ -47,4 +46,3 @@ while len(nextbytes) == 4:
 
 # Read everything from the _Tables and _Columns tables
 # these have information needed to read tables with details on install files/directories
-

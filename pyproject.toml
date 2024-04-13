@@ -34,9 +34,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "olefile",
-    "click",
-    "loguru"
+    "olefile"
 ]
 dynamic = ["version"]
 
@@ -71,4 +69,3 @@ select = ["E", "F", "B", "I"]
 ignore = ["E501", "F841"]
 # don't fix flake8-bugbear (`B`) violations
 unfixable = ["B"]
-

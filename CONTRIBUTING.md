@@ -46,4 +46,3 @@ pip install -e ".[test,dev]"
 ## Code of Conduct
 
 All participants in the pymsi community are expected to follow our [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
-

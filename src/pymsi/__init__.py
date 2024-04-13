@@ -4,4 +4,4 @@ except ModuleNotFoundError:
     __version__ = ""
     __version_tuple__ = ()
 
-from .pymsi import *
+from .pymsi import *  # noqa: F403
