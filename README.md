@@ -19,7 +19,7 @@ For more, see the [documentation](https://pymsi.readthedocs.io/en/latest/).
 pymsi is available on PyPI:
 
 ```sh
-pip install pymsi
+pip install msi
 ```
 
 ### Usage
