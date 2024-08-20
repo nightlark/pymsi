@@ -1,4 +1,5 @@
 import olefile
+
 import pymsi
 
 ole = olefile.OleFileIO("test.msi")
