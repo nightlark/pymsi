@@ -1,5 +1,6 @@
-from .constants import TABLE_PREFIX, TABLE_PREFIX_UTF8
 from typing import Tuple
+
+from .constants import TABLE_PREFIX, TABLE_PREFIX_UTF8
 
 
 # variant of base64 encoding
@@ -36,6 +37,7 @@ def is_valid(name, isTable=False):
     else:
         # NOTE: this may not be 100% accurate; need to check if it is a byte count using a particular encoding
         return len(encode_unicode(name, isTable)) <= 31
+
 
 def decode_unicode(name: str) -> Tuple[str, bool]:
     if len(name) < 1:

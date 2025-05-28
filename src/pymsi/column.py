@@ -1,4 +1,10 @@
-from pymsi.constants import COL_FIELD_SIZE_MASK, COL_LOCALIZABLE_BIT, COL_NULLABLE_BIT, COL_PRIMARY_KEY_BIT, COL_STRING_BIT
+from pymsi.constants import (
+    COL_FIELD_SIZE_MASK,
+    COL_LOCALIZABLE_BIT,
+    COL_NULLABLE_BIT,
+    COL_PRIMARY_KEY_BIT,
+    COL_STRING_BIT,
+)
 from pymsi.reader import BinaryReader
 from pymsi.stringpool import StringPool
 

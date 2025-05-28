@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from pymsi.constants import BOM, PROPERTY_CODEPAGE
+
 from .codepage import CodePage
 from .reader import BinaryReader
 from .timestamp import to_datetime

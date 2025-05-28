@@ -34,8 +34,12 @@ class Package:
         with self.ole.openstream(SUMMARY_INFO_STREAM_NAME) as stream:
             self.summary = Summary(stream)
 
-        with self.ole.openstream(streamname.encode_unicode(STRING_POOL_TABLE_NAME, True)) as pool_stream:
-            with self.ole.openstream(streamname.encode_unicode(STRING_DATA_TABLE_NAME, True)) as data_stream:
+        with self.ole.openstream(
+            streamname.encode_unicode(STRING_POOL_TABLE_NAME, True)
+        ) as pool_stream:
+            with self.ole.openstream(
+                streamname.encode_unicode(STRING_DATA_TABLE_NAME, True)
+            ) as data_stream:
                 self.string_pool = StringPool(pool_stream, data_stream)
 
         with self.ole.openstream(TABLE_TABLES.stream_name()) as stream:
