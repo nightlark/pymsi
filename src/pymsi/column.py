@@ -1,4 +1,4 @@
-from pymsi.constants import *
+from pymsi.constants import COL_FIELD_SIZE_MASK, COL_LOCALIZABLE_BIT, COL_NULLABLE_BIT, COL_PRIMARY_KEY_BIT, COL_STRING_BIT
 from pymsi.reader import BinaryReader
 from pymsi.stringpool import StringPool
 
@@ -45,21 +45,20 @@ class Column:
         return self.size
 
     def read_value(self, reader: BinaryReader, string_pool: StringPool):
-        match self.type:
-            case "str":
-                return string_pool.read_string(reader)
-            case "i32":
-                val = reader.read_i32_le()
-                if val == 0:
-                    return None
-                return val ^ -0x8000_0000
-            case "i16":
-                val = reader.read_i16_le()
-                if val == 0:
-                    return None
-                return val ^ -0x8000
-            case _:
-                raise ValueError(f"Unknown column type: {self.type}")
+        if self.type == "str":
+            return string_pool.read_string(reader)
+        elif self.type == "i32":
+            val = reader.read_i32_le()
+            if val == 0:
+                return None
+            return val ^ -0x8000_0000
+        elif self.type == "i16":
+            val = reader.read_i16_le()
+            if val == 0:
+                return None
+            return val ^ -0x8000
+        else:
+            raise ValueError(f"Unknown column type: {self.type}")
 
     def mark_primary_key(self):
         self.primary_key = True

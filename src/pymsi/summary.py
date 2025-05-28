@@ -18,7 +18,8 @@ PROPERTY_CREATING_APP = 18
 class Summary:
     def __init__(self, stream):
         self.properties = PropertySet(stream)
-        assert self.properties.fmtid == FMTID, "Invalid format identifier"
+        if self.properties.fmtid != FMTID:
+            raise ValueError("Invalid format identifier for Summary Info stream")
 
     def arch(self):
         value = self.properties.get(PROPERTY_TEMPLATE)

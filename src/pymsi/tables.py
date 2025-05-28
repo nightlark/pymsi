@@ -1,4 +1,4 @@
-from pymsi.category import *
+from pymsi.category import CATEGORIES_ALL, CATEGORY_IDENTIFIER, CATEGORY_TEXT
 from pymsi.column import Column
 from pymsi.table import Table
 

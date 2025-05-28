@@ -8,11 +8,14 @@ from typing import Iterator
 
 import olefile
 
+from pymsi import streamname
+from pymsi.category import CATEGORIES_ALL
+from pymsi.column import Column
+from pymsi.constants import STRING_DATA_TABLE_NAME, STRING_POOL_TABLE_NAME, SUMMARY_INFO_STREAM_NAME
 from pymsi.reader import BinaryReader
-from pymsi.tables import *
+from pymsi.table import Table
+from pymsi.tables import TABLE_COLUMNS, TABLE_TABLES, TABLE_VALIDATION
 
-from .constants import *
-from .streamname import *
 from .stringpool import StringPool
 from .summary import Summary
 
@@ -31,8 +34,8 @@ class Package:
         with self.ole.openstream(SUMMARY_INFO_STREAM_NAME) as stream:
             self.summary = Summary(stream)
 
-        with self.ole.openstream(encode_unicode(STRING_POOL_TABLE_NAME, True)) as pool_stream:
-            with self.ole.openstream(encode_unicode(STRING_DATA_TABLE_NAME, True)) as data_stream:
+        with self.ole.openstream(streamname.encode_unicode(STRING_POOL_TABLE_NAME, True)) as pool_stream:
+            with self.ole.openstream(streamname.encode_unicode(STRING_DATA_TABLE_NAME, True)) as data_stream:
                 self.string_pool = StringPool(pool_stream, data_stream)
 
         with self.ole.openstream(TABLE_TABLES.stream_name()) as stream:
