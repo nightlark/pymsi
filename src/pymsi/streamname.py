@@ -1,5 +1,6 @@
 from .constants import TABLE_PREFIX, TABLE_PREFIX_UTF8
 
+
 # variant of base64 encoding
 def utf2mime(x):
     if x in range(ord("0"), ord("9") + 1):
@@ -28,7 +29,7 @@ def mime2utf(x):
     return "_"
 
 
-def is_valid(name, isTable = False):
+def is_valid(name, isTable=False):
     if not name or (not isTable and name.startswith(TABLE_PREFIX)):
         return False
     else:

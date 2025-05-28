@@ -55,6 +55,7 @@ CATEGORIES_ALL = [
     CATEGORY_SHORTCUT,
 ]
 
+
 def validate(category, data: str):
     if category == CATEGORY_TEXT:
         return True
@@ -73,16 +74,16 @@ def validate(category, data: str):
         except ValueError:
             return False
     if category == CATEGORY_IDENTIFIER:
-        starts_valid = data and (data[0].isalpha() or data[0] == '_')
-        all_valid = all(c.isalnum() or c == '_' or c == '.' for c in data)
+        starts_valid = data and (data[0].isalpha() or data[0] == "_")
+        all_valid = all(c.isalnum() or c == "_" or c == "." for c in data)
         return starts_valid and all_valid
     if category == CATEGORY_PROPERTY:
-        substr = data[1:] if data.startswith('%') else data
+        substr = data[1:] if data.startswith("%") else data
         return validate(CATEGORY_IDENTIFIER, substr)
     if category == CATEGORY_GUID:
         if len(data) != 38:
             return False
-        if not data.startswith('{') or not data.endswith('}'):
+        if not data.startswith("{") or not data.endswith("}"):
             return False
         if any(c.islower() for c in data):
             return False
@@ -92,7 +93,7 @@ def validate(category, data: str):
         except ValueError:
             return False
     if category == CATEGORY_VERSION:
-        parts = data.split('.')
+        parts = data.split(".")
         if len(parts) > 4:
             return False
         try:
@@ -100,14 +101,14 @@ def validate(category, data: str):
         except ValueError:
             return False
     if category == CATEGORY_LANGUAGE:
-        parts = data.split('.')
+        parts = data.split(".")
         return all(0 <= int(part) < 65536 for part in parts)
     if category == CATEGORY_CABINET:
-        if data.startswith('#'):
+        if data.startswith("#"):
             substr = data[1:]
             return validate(CATEGORY_IDENTIFIER, substr)
         else:
-            parts = data.rsplit('.', 1)[::-1]
+            parts = data.rsplit(".", 1)[::-1]
             if not parts:
                 return False
             if not parts[0]:

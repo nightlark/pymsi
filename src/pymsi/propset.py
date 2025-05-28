@@ -1,7 +1,8 @@
-from .reader import BinaryReader
-from .constants import *
 from .codepage import CodePage
+from .constants import *
+from .reader import BinaryReader
 from .timestamp import to_datetime
+
 
 class PropertySet:
     def __init__(self, stream):
@@ -34,7 +35,7 @@ class PropertySet:
             offset = reader.read_u32_le()
             assert name not in prop_offsets, f"Duplicate property name: {name}"
             prop_offsets[name] = offset
-        
+
         if PROPERTY_CODEPAGE in prop_offsets:
             codepage_offset = prop_offsets[PROPERTY_CODEPAGE]
             reader.seek(section_offset + codepage_offset)
@@ -47,7 +48,9 @@ class PropertySet:
         for name, offset in prop_offsets.items():
             reader.seek(section_offset + offset)
             value = PropertyValue(reader, self.codepage)
-            assert value.min_version <= file_version, f"Property {name} ({value.type}) version {value.min_version} is not supported by file version {file_version}"
+            assert value.min_version <= file_version, (
+                f"Property {name} ({value.type}) version {value.min_version} is not supported by file version {file_version}"
+            )
             self.properties[name] = value
 
     # Returns the raw value or None; quiet-fails
@@ -58,7 +61,7 @@ class PropertySet:
         if prop is not None:
             return prop.value
         return None
-    
+
     # Returns the property's raw value or throws
     def __getitem__(self, name):
         if not isinstance(name, int):
@@ -69,7 +72,8 @@ class PropertySet:
         if not isinstance(name, int):
             raise TypeError("Name must be of type int")
         return name in self.properties
-    
+
+
 class PropertyValue:
     def __init__(self, reader, codepage):
         type_id = reader.read_u32_le()

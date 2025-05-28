@@ -2,8 +2,9 @@ from pymsi.constants import *
 from pymsi.reader import BinaryReader
 from pymsi.stringpool import StringPool
 
+
 class Column:
-    def __init__(self, name, bits = None):
+    def __init__(self, name, bits=None):
         self.name = name
         self.localizable = False
         self.nullable = False
@@ -15,10 +16,10 @@ class Column:
         self.category = None
         self.enum_values = []
         self.description = None
-        
+
         if bits:
             self.set_bits(bits)
-    
+
     def set_bits(self, bits):
         field_size = bits & COL_FIELD_SIZE_MASK
         if bits & COL_STRING_BIT:
@@ -30,78 +31,78 @@ class Column:
             self.i16()
         else:
             raise ValueError(f"Invalid column field size: {field_size}")
-        
+
         if bits & COL_LOCALIZABLE_BIT:
             self.localizable = True
         if bits & COL_NULLABLE_BIT:
             self.nullable = True
         if bits & COL_PRIMARY_KEY_BIT:
             self.primary_key = True
-        
+
     def width(self, long_string_refs):
-        if self.type == 'str':
+        if self.type == "str":
             return 3 if long_string_refs else 2
         return self.size
-        
+
     def read_value(self, reader: BinaryReader, string_pool: StringPool):
         match self.type:
-            case 'str':
+            case "str":
                 return string_pool.read_string(reader)
-            case 'i32':
+            case "i32":
                 val = reader.read_i32_le()
                 if val == 0:
                     return None
                 return val ^ -0x8000_0000
-            case 'i16':
+            case "i16":
                 val = reader.read_i16_le()
                 if val == 0:
                     return None
                 return val ^ -0x8000
             case _:
                 raise ValueError(f"Unknown column type: {self.type}")
-    
+
     def mark_primary_key(self):
         self.primary_key = True
         return self
-        
+
     def mark_nullable(self):
         self.nullable = True
         return self
-        
+
     def mark_range(self, min, max):
         self.value_range_min = min
         self.value_range_max = max
         return self
-        
+
     def mark_foreign_key(self, table, index):
         self.foreign_key_table = table
         self.foreign_key_index = index
         return self
-        
+
     def mark_enum_values(self, values):
         self.enum_values = values
         return self
-        
+
     def mark_category(self, category):
         self.category = category
         return self
-    
+
     def mark_description(self, description):
         self.description = description
         return self
-        
+
     def string(self, size):
-        self.type = 'str'
+        self.type = "str"
         self.size = size
         return self
-    
+
     def i32(self):
-        self.type = 'i32'
+        self.type = "i32"
         self.size = 4
         return self
-        
+
     def i16(self):
-        self.type = 'i16'
+        self.type = "i16"
         self.size = 2
         return self
 

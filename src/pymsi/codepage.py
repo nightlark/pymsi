@@ -25,8 +25,9 @@ PAGES = {
     28596: "iso8859_6",
     28597: "iso8859_7",
     28598: "iso8859_8",
-    65001: "utf-8"
+    65001: "utf-8",
 }
+
 
 class CodePage:
     def __init__(self, id: int):
@@ -34,8 +35,9 @@ class CodePage:
             raise ValueError(f"Unsupported code page ID: {id}")
         self.id = id
         self.encoding = PAGES[id]
-        
+
     def decode(self, data: bytes) -> str:
         return data.decode(self.encoding)
+
 
 CodePage.DEFAULT = CodePage(0)

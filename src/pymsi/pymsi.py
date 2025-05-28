@@ -5,14 +5,17 @@
 
 import copy
 from typing import Iterator
-from pymsi.reader import BinaryReader
-from pymsi.tables import *
-from .constants import *
-from .streamname import *
-from .summary import Summary
-from .stringpool import StringPool
 
 import olefile
+
+from pymsi.reader import BinaryReader
+from pymsi.tables import *
+
+from .constants import *
+from .streamname import *
+from .stringpool import StringPool
+from .summary import Summary
+
 
 class Package:
     def __init__(self, filename):
@@ -24,61 +27,66 @@ class Package:
 
     def _load(self):
         self.ole = olefile.OleFileIO(self.filename)
-        
+
         with self.ole.openstream(SUMMARY_INFO_STREAM_NAME) as stream:
             self.summary = Summary(stream)
-            
+
         with self.ole.openstream(encode_unicode(STRING_POOL_TABLE_NAME, True)) as pool_stream:
             with self.ole.openstream(encode_unicode(STRING_DATA_TABLE_NAME, True)) as data_stream:
                 self.string_pool = StringPool(pool_stream, data_stream)
-                
+
         with self.ole.openstream(TABLE_TABLES.stream_name()) as stream:
             rows = TABLE_TABLES._read_rows(BinaryReader(stream), self.string_pool)
-            table_names = {row['Name'] for row in rows}
+            table_names = {row["Name"] for row in rows}
 
         columns = self._read_columns()
         self.tables = {name: Table(name, columns[name]) for name in table_names}
         self._read_validations()
         self.tables[TABLE_TABLES.name] = copy.copy(TABLE_TABLES)
         self.tables[TABLE_COLUMNS.name] = copy.copy(TABLE_COLUMNS)
-        
+
     def _read_columns(self):
         columns = {}
         with self.ole.openstream(TABLE_COLUMNS.stream_name()) as stream:
             rows = TABLE_COLUMNS._read_rows(BinaryReader(stream), self.string_pool)
-            
+
             for row in rows:
-                table_name = row['Table']
-                column_name = row['Name']
-                column_typebits = row['Type']
-                column_number = row['Number']
-                
+                table_name = row["Table"]
+                column_name = row["Name"]
+                column_typebits = row["Type"]
+                column_number = row["Number"]
+
                 if table_name not in columns:
                     columns[table_name] = []
                 columns[table_name].append((column_number, Column(column_name, column_typebits)))
-            
-        columns = dict((name, [col[1] for col in sorted(cols, key=lambda x: x[0])]) for name, cols in columns.items())
+
+        columns = dict(
+            (name, [col[1] for col in sorted(cols, key=lambda x: x[0])])
+            for name, cols in columns.items()
+        )
         return columns
 
     def _read_validations(self):
         with self.ole.openstream(TABLE_VALIDATION.stream_name()) as stream:
             rows = TABLE_VALIDATION._read_rows(BinaryReader(stream), self.string_pool)
             for row in rows:
-                table_name = row['Table']
-                column_name = row['Column']
-                is_nullable = row['Nullable'] == 'Y'
-                min_value = row['MinValue']
-                max_value = row['MaxValue']
-                key_table = row['KeyTable']
-                key_column = row['KeyColumn']
-                category = row['Category']
-                set_name = row['Set']
-                description = row['Description']
-                
+                table_name = row["Table"]
+                column_name = row["Column"]
+                is_nullable = row["Nullable"] == "Y"
+                min_value = row["MinValue"]
+                max_value = row["MaxValue"]
+                key_table = row["KeyTable"]
+                key_column = row["KeyColumn"]
+                category = row["Category"]
+                set_name = row["Set"]
+                description = row["Description"]
+
                 if table_name not in self.tables:
-                    print(f"Warning: Table {table_name} not found in package, skipping validation for column {column_name}")
+                    print(
+                        f"Warning: Table {table_name} not found in package, skipping validation for column {column_name}"
+                    )
                     continue
-                
+
                 column = self.tables[table_name].column(column_name)
                 if column is None:
                     raise ValueError(f"Column {column_name} not found in table {table_name}")
@@ -91,14 +99,14 @@ class Package:
                 if category is not None and category in CATEGORIES_ALL:
                     column.mark_category(category)
                 if set_name is not None:
-                    column.mark_enum_values(set_name.split(';'))
+                    column.mark_enum_values(set_name.split(";"))
                 if description is not None:
                     column.mark_description(description)
 
     def get(self, name: str) -> Table:
         if name not in self.tables:
             return None
-        
+
         table = self.tables[name]
         if table.rows is None:
             with self.ole.openstream(table.stream_name()) as stream:
@@ -111,19 +119,19 @@ class Package:
         if table is None:
             raise KeyError(f"Table '{name}' not found in package")
         return table
-    
+
     def __contains__(self, name: str) -> bool:
         return name in self.tables
-    
+
     def __iter__(self) -> Iterator[Table]:
         return iter(self.tables.values())
-    
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
-    
+
     def close(self):
         if self.ole is not None:
             self.ole.close()

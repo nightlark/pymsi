@@ -1,5 +1,6 @@
-from .propset import PropertySet
 import datetime
+
+from .propset import PropertySet
 
 FMTID = b"\xe0\x85\x9f\xf2\xf9\x4f\x68\x10\xab\x91\x08\x00\x2b\x27\xb3\xd9"
 
@@ -13,15 +14,16 @@ PROPERTY_CREATION_TIME = 12
 PROPERTY_WORD_COUNT = 15
 PROPERTY_CREATING_APP = 18
 
+
 class Summary:
     def __init__(self, stream):
         self.properties = PropertySet(stream)
         assert self.properties.fmtid == FMTID, "Invalid format identifier"
-    
+
     def arch(self):
         value = self.properties.get(PROPERTY_TEMPLATE)
         if isinstance(value, str):
-            return value.split(';')[0]
+            return value.split(";")[0]
         return None
 
     def author(self):
@@ -51,7 +53,7 @@ class Summary:
     def languages(self):
         value = self.properties.get(PROPERTY_TEMPLATE)
         if isinstance(value, str):
-            template = value.split(';')
+            template = value.split(";")
             if len(template) > 1:
                 return [int(lang) for lang in template[1:]]
             return []
@@ -80,11 +82,12 @@ class Summary:
         if isinstance(value, int):
             return value
         return None
-    
+
     def __repr__(self):
-        return (f"Summary(arch={self.arch()}, author={self.author()}, "
-                f"comments={self.comments()}, creating_application={self.creating_application()}, "
-                f"creation_time={self.creation_time()}, languages={self.languages()}, "
-                f"subject={self.subject()}, title={self.title()}, uuid={self.uuid()}, "
-                f"word_count={self.word_count()})")
-    
+        return (
+            f"Summary(arch={self.arch()}, author={self.author()}, "
+            f"comments={self.comments()}, creating_application={self.creating_application()}, "
+            f"creation_time={self.creation_time()}, languages={self.languages()}, "
+            f"subject={self.subject()}, title={self.title()}, uuid={self.uuid()}, "
+            f"word_count={self.word_count()})"
+        )

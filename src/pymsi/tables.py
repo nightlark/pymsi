@@ -2,7 +2,6 @@ from pymsi.category import *
 from pymsi.column import Column
 from pymsi.table import Table
 
-
 TABLE_COLUMNS = Table(
     "_Columns",
     [
@@ -10,18 +9,18 @@ TABLE_COLUMNS = Table(
         Column("Number").mark_primary_key().i16(),
         Column("Name").string(64),
         Column("Type").i16(),
-    ]
+    ],
 )
 
 TABLE_TABLES = Table(
     "_Tables",
     [
         Column("Name").mark_primary_key().string(64),
-    ]
+    ],
 )
 
-TABLEVAL_MIN = -0x7fff_ffff
-TABLEVAL_MAX = 0x7fff_ffff
+TABLEVAL_MIN = -0x7FFF_FFFF
+TABLEVAL_MAX = 0x7FFF_FFFF
 TABLE_VALIDATION = Table(
     "_Validation",
     [
@@ -35,5 +34,5 @@ TABLE_VALIDATION = Table(
         Column("Category").mark_nullable().mark_enum_values(CATEGORIES_ALL).string(32),
         Column("Set").mark_nullable().mark_category(CATEGORY_TEXT).string(255),
         Column("Description").mark_nullable().mark_category(CATEGORY_TEXT).string(255),
-    ]
+    ],
 )
