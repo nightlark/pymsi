@@ -1,3 +1,4 @@
+from typing import Optional
 from pymsi.constants import (
     COL_FIELD_SIZE_MASK,
     COL_LOCALIZABLE_BIT,
@@ -10,7 +11,7 @@ from pymsi.stringpool import StringPool
 
 
 class Column:
-    def __init__(self, name, bits=None):
+    def __init__(self, name: str, bits: Optional[int] = None):
         self.name = name
         self.localizable = False
         self.nullable = False
@@ -26,7 +27,7 @@ class Column:
         if bits:
             self.set_bits(bits)
 
-    def set_bits(self, bits):
+    def set_bits(self, bits: int):
         field_size = bits & COL_FIELD_SIZE_MASK
         if bits & COL_STRING_BIT:
             self.string(field_size)
@@ -45,7 +46,7 @@ class Column:
         if bits & COL_PRIMARY_KEY_BIT:
             self.primary_key = True
 
-    def width(self, long_string_refs):
+    def width(self, long_string_refs: bool):
         if self.type == "str":
             return 3 if long_string_refs else 2
         return self.size

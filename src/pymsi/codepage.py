@@ -30,6 +30,8 @@ PAGES = {
 
 
 class CodePage:
+    DEFAULT: "CodePage"
+
     def __init__(self, id: int):
         if id not in PAGES:
             raise ValueError(f"Unsupported code page ID: {id}")

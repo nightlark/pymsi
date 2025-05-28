@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from .codepage import CodePage
 from .reader import BinaryReader
 
@@ -14,7 +15,7 @@ class StringPool:
         codepage_id = codepage_id & ~LONG_STRING_REFS_BIT
         self.codepage = CodePage(codepage_id)
 
-        self.strings = []
+        self.strings: List[Tuple[str, int]] = []
         while not pool_reader.iseof():
             length = pool_reader.read_u16_le()
             refcount = pool_reader.read_u16_le()

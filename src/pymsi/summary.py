@@ -1,4 +1,5 @@
 import datetime
+from typing import List, Optional
 
 from .propset import PropertySet
 
@@ -51,7 +52,7 @@ class Summary:
             return value
         return None
 
-    def languages(self):
+    def languages(self) -> Optional[List[int]]:
         value = self.properties.get(PROPERTY_TEMPLATE)
         if isinstance(value, str):
             template = value.split(";")

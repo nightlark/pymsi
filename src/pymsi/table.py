@@ -1,3 +1,4 @@
+from typing import Dict, List, Optional, Union
 from pymsi import streamname
 from pymsi.column import Column
 from pymsi.reader import BinaryReader
@@ -5,7 +6,7 @@ from pymsi.stringpool import StringPool
 
 
 class Table:
-    def __init__(self, name: str, columns: list[Column]):
+    def __init__(self, name: str, columns: List[Column]):
         self.name = name
         self.columns = columns
         self.rows = None
@@ -13,24 +14,24 @@ class Table:
     def stream_name(self) -> str:
         return streamname.encode_unicode(self.name, True)
 
-    def column_index(self, column_name: str) -> int | None:
+    def column_index(self, column_name: str) -> Optional[int]:
         for index, column in enumerate(self.columns):
             if column.name == column_name:
                 return index
         return None
 
-    def column(self, column_name: str) -> Column | None:
+    def column(self, column_name: str) -> Optional[Column]:
         for column in self.columns:
             if column.name == column_name:
                 return column
         return None
 
-    def primary_key_indices(self) -> list[int]:
+    def primary_key_indices(self) -> List[int]:
         return [index for index, column in enumerate(self.columns) if column.primary_key]
 
     def _read_rows(
-        self, reader: BinaryReader, string_pool: StringPool, as_dict=True
-    ) -> list[list] | list[dict]:
+        self, reader: BinaryReader, string_pool: StringPool
+    ) -> List[Dict]:
         data_len = reader.size() - reader.tell()
         row_size = sum([c.width(string_pool.long_string_refs) for c in self.columns])
         num_rows = 0 if row_size == 0 else data_len // row_size
@@ -44,16 +45,15 @@ class Table:
             for row in range(num_rows):
                 rows[row].append(col.read_value(reader, string_pool))
 
-        if as_dict:
-            return [dict(zip([col.name for col in self.columns], row)) for row in rows]
+        rows = [dict(zip([col.name for col in self.columns], row)) for row in rows]
         return rows
 
-    def read_rows(self, reader: BinaryReader, string_pool: StringPool) -> list[list] | list[dict]:
+    def read_rows(self, reader: BinaryReader, string_pool: StringPool) -> List[Dict]:
         if self.rows is None:
-            self.rows = self._read_rows(reader, string_pool, True)
+            self.rows = self._read_rows(reader, string_pool)
         return self.rows
 
-    def __getitem__(self, row: int) -> dict:
+    def __getitem__(self, row: int) -> Dict:
         if self.rows is None:
             raise ValueError("Rows not read yet, call read_rows() first")
         return self.rows[row]

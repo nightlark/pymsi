@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Dict, Union
 
 from pymsi.constants import BOM, PROPERTY_CODEPAGE
 
@@ -20,8 +21,8 @@ class PropertySet:
 
         self.os_version = reader.read_u16_le()
         self.os = reader.read_u16_le()
-        if self.os_version not in [0, 1, 2]:
-            raise ValueError(f"Unsupported OS version: {self.os_version}")
+        if self.os not in [0, 1, 2]:
+            raise ValueError(f"Unsupported OS: {self.os}")
 
         self.clsid = reader.read_bytes(16)
 
@@ -48,11 +49,13 @@ class PropertySet:
             codepage_offset = prop_offsets[PROPERTY_CODEPAGE]
             reader.seek(section_offset + codepage_offset)
             value = PropertyValue(reader, CodePage.DEFAULT)
+            if not isinstance(value.value, int):
+                raise ValueError(f"Invalid codepage value: {value.value} {type(value.value)}")
             self.codepage = CodePage(value.value)
         else:
             self.codepage = CodePage.DEFAULT
 
-        self.properties = {}
+        self.properties: Dict[int, PropertyValue] = {}
         for name, offset in prop_offsets.items():
             reader.seek(section_offset + offset)
             value = PropertyValue(reader, self.codepage)
@@ -62,15 +65,14 @@ class PropertySet:
                 )
             self.properties[name] = value
 
-    # Returns the raw value or None; quiet-fails
-    def get(self, name: int) -> None | int | str | datetime:
+
+    def get(self, name: int):
         prop = self.properties.get(name)
         if prop is not None:
             return prop.value
         return None
 
-    # Returns the property's raw value or throws
-    def __getitem__(self, name: int) -> None | int | str | datetime:
+    def __getitem__(self, name: int):
         return self.properties[name].value
 
     def __contains__(self, name: int) -> bool:

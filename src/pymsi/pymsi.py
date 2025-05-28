@@ -4,7 +4,7 @@
 # https://stackoverflow.com/questions/9734978/view-msi-strings-in-binary
 
 import copy
-from typing import Iterator
+from typing import Iterator, Optional
 
 import olefile
 
@@ -110,7 +110,7 @@ class Package:
                 if description is not None:
                     column.mark_description(description)
 
-    def get(self, name: str) -> Table:
+    def get(self, name: str) -> Optional[Table]:
         if name not in self.tables:
             return None
 
