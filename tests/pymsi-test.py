@@ -2,7 +2,7 @@ import olefile
 
 import pymsi
 
-ole = olefile.OleFileIO("test.msi")
+ole = olefile.OleFileIO("powertoys.msi")
 
 # Decode all the stream names in the OLE file
 for k in ole.root.kids:

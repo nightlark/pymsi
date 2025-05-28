@@ -5,16 +5,18 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "msi"
 authors = [
-    {name = "Ryan Mast", email = "mast.ryan@gmail.com"},
+    { name = "Asriel Camora", email = "asriel@camora.dev" },
+    { name = "Ryan Mast", email = "mast.ryan@gmail.com" },
 ]
 maintainers = [
-    {name = "Ryan Mast", email = "mast.ryan@gmail.com"},
+    { name = "Asriel Camora", email = "asriel@camora.dev" },
+    { name = "Ryan Mast", email = "mast.ryan@gmail.com" },
 ]
 description = "A pure Python library for reading and manipulating Windows Installer (MSI) files. Based on the rust msi crate and msitools utilities"
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["pe", "installer", "ole", "msi"]
-license = {text = "MIT License"}
+license = { text = "MIT License" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -23,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Operating System :: MacOS",
@@ -33,9 +36,7 @@ classifiers = [
     "Topic :: Utilities",
     "License :: OSI Approved :: MIT License",
 ]
-dependencies = [
-    "olefile"
-]
+dependencies = ["olefile"]
 dynamic = ["version"]
 
 [project.optional-dependencies]

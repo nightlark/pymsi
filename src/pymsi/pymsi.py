@@ -3,166 +3,143 @@
 # https://github.com/mdsteele/rust-msi/blob/master/src/internal/streamname.rs
 # https://stackoverflow.com/questions/9734978/view-msi-strings-in-binary
 
-# Windows Installer MST (transform)
-MST_CLSID = "{000c1082-0000-0000-c000-000000000046}"
-# Windows Installer MSI and MSM (merge)
-MSI_CLSID = "{000c1084-0000-0000-c000-000000000046}"
-# Windows Installer Patch MSP
-MSP_CLSID = "{000c1086-0000-0000-c000-000000000046}"
+import copy
+from typing import Iterator, Optional
 
-DIGITAL_SIGNATURE_STREAM_NAME = "\u0005DigitalSignature"
-MSI_DIGITAL_SIGNATURE_EX_STREAM_NAME = "\u0005MsiDigitalSignatureEx"
-SUMMARY_INFO_STREAM_NAME = "\u0005SummaryInformation"
+import olefile
 
-TABLE_PREFIX = "\u4840"
+from pymsi import streamname
+from pymsi.category import CATEGORIES_ALL
+from pymsi.column import Column
+from pymsi.constants import STRING_DATA_TABLE_NAME, STRING_POOL_TABLE_NAME, SUMMARY_INFO_STREAM_NAME
+from pymsi.reader import BinaryReader
+from pymsi.table import Table
+from pymsi.tables import TABLE_COLUMNS, TABLE_TABLES, TABLE_VALIDATION
 
-
-# variant of base64 encoding
-def utf2mime(x):
-    if x in range(ord("0"), ord("9") + 1):
-        return x - ord("0")
-    if x in range(ord("A"), ord("Z") + 1):
-        return x - ord("A") + 10
-    if x in range(ord("a"), ord("z") + 1):
-        return x - ord("a") + 10 + 26
-    if x == ord("."):
-        return 10 + 26 + 26
-    if x == ord("_"):
-        return 10 + 26 + 26 + 1
-    return None
+from .stringpool import StringPool
+from .summary import Summary
 
 
-# variant of base64 decoding
-def mime2utf(x):
-    if x < 10:
-        return chr(x + ord("0"))
-    if x < (10 + 26):
-        return chr(x - 10 + ord("A"))
-    if x < (10 + 26 + 26):
-        return chr(x - 10 - 26 + ord("a"))
-    if x == (10 + 26 + 26):
-        return "."
-    return "_"
+class Package:
+    def __init__(self, filename):
+        self.filename = filename
+        self.tables = {}
+        self.ole = None
+        self.summary = None
+        self._load()
 
+    def _load(self):
+        self.ole = olefile.OleFileIO(self.filename)
 
-def is_valid_streamname(name, isTable=False):
-    if not name or (not isTable and name.startswith(TABLE_PREFIX)):
-        return False
-    else:
-        # NOTE: this may not be 100% accurate; need to check if it is a byte count using a particular encoding
-        return len(encode_streamname_unicode(name, isTable)) <= 31
+        with self.ole.openstream(SUMMARY_INFO_STREAM_NAME) as stream:
+            self.summary = Summary(stream)
 
+        with self.ole.openstream(
+            streamname.encode_unicode(STRING_POOL_TABLE_NAME, True)
+        ) as pool_stream:
+            with self.ole.openstream(
+                streamname.encode_unicode(STRING_DATA_TABLE_NAME, True)
+            ) as data_stream:
+                self.string_pool = StringPool(pool_stream, data_stream)
 
-# this works directly with python unicode string
-def decode_streamname_unicode(name):
-    if len(name) < 1:
-        return str(), False
-    out = str()
-    isTable = False
-    name_enum = enumerate(name)
-    if ord(name[0]) == ord(TABLE_PREFIX):
-        isTable = True
-        next(name_enum)
-    for _idx, c in name_enum:
-        value = ord(c)
-        if value in range(0x3800, 0x4800):
-            value = value - 0x3800
-            out += mime2utf(value & 0x3F)
-            out += mime2utf(value >> 6)
-        elif value in range(0x4800, 0x4840):
-            out += mime2utf(value - 0x4800)
-        else:
-            out += c
-    return out, isTable
+        with self.ole.openstream(TABLE_TABLES.stream_name()) as stream:
+            rows = TABLE_TABLES._read_rows(BinaryReader(stream), self.string_pool)
+            table_names = {row["Name"] for row in rows}
 
+        columns = self._read_columns()
+        self.tables = {name: Table(name, columns[name]) for name in table_names}
+        self._read_validations()
+        self.tables[TABLE_TABLES.name] = copy.copy(TABLE_TABLES)
+        self.tables[TABLE_COLUMNS.name] = copy.copy(TABLE_COLUMNS)
 
-# encode using unicode
-def encode_streamname_unicode(name, isTable=False):
-    out = str()
-    if isTable:
-        out += TABLE_PREFIX
-    name_enum = enumerate(name)
-    for idx, c1 in name_enum:
-        value1 = utf2mime(ord(c1))
-        if value1 is not None:
-            if idx + 1 < len(name):
-                value2 = utf2mime(ord(name[idx + 1]))
-                if value2 is not None:
-                    encoded = 0x3800 + (value2 << 6) + value1
-                    out += chr(encoded)
-                    next(name_enum)
+    def _read_columns(self):
+        columns = {}
+        with self.ole.openstream(TABLE_COLUMNS.stream_name()) as stream:
+            rows = TABLE_COLUMNS._read_rows(BinaryReader(stream), self.string_pool)
+
+            for row in rows:
+                table_name = row["Table"]
+                column_name = row["Name"]
+                column_typebits = row["Type"]
+                column_number = row["Number"]
+
+                if table_name not in columns:
+                    columns[table_name] = []
+                columns[table_name].append((column_number, Column(column_name, column_typebits)))
+
+        columns = dict(
+            (name, [col[1] for col in sorted(cols, key=lambda x: x[0])])
+            for name, cols in columns.items()
+        )
+        return columns
+
+    def _read_validations(self):
+        with self.ole.openstream(TABLE_VALIDATION.stream_name()) as stream:
+            rows = TABLE_VALIDATION._read_rows(BinaryReader(stream), self.string_pool)
+            for row in rows:
+                table_name = row["Table"]
+                column_name = row["Column"]
+                is_nullable = row["Nullable"] == "Y"
+                min_value = row["MinValue"]
+                max_value = row["MaxValue"]
+                key_table = row["KeyTable"]
+                key_column = row["KeyColumn"]
+                category = row["Category"]
+                set_name = row["Set"]
+                description = row["Description"]
+
+                if table_name not in self.tables:
+                    print(
+                        f"Warning: Table {table_name} not found in package, skipping validation for column {column_name}"
+                    )
                     continue
-            encoded = 0x4800 + value1
-            out += chr(encoded)
-        else:
-            out += c1
-    return out
 
+                column = self.tables[table_name].column(column_name)
+                if column is None:
+                    raise ValueError(f"Column {column_name} not found in table {table_name}")
+                if is_nullable:
+                    column.mark_nullable()
+                if min_value is not None and max_value is not None:
+                    column.mark_range(min_value, max_value)
+                if key_table is not None and key_column is not None:
+                    column.mark_foreign_key(key_table, key_column)
+                if category is not None and category in CATEGORIES_ALL:
+                    column.mark_category(category)
+                if set_name is not None:
+                    column.mark_enum_values(set_name.split(";"))
+                if description is not None:
+                    column.mark_description(description)
 
-# this operates on utf-8 encoded bytes
-def decode_streamname_utf8(name):
-    out = str()
-    isTable = False
-    name_enum = enumerate(name)
-    if name.startswith(b"\xe4\xa1\x80"):
-        isTable = True
-        next(name_enum)
-        next(name_enum)
-        next(name_enum)
-    for idx, c in name_enum:
-        if idx + 2 >= len(name):
-            break
-        if (name[idx] == 0xE3 and name[idx + 1] >= 0xA0) or (
-            name[idx] == 0xE4 and name[idx + 1] < 0xA0
-        ):
-            out += mime2utf(name[idx + 2] & 0x7F)
-            out += mime2utf(name[idx + 1] ^ 0xA0)
-            next(name_enum)
-            next(name_enum)
-            continue
-        if name[idx] == 0xE4 and name[idx + 1] == 0xA0:
-            out += mime2utf(name[idx + 2] & 0x7F)
-            next(name_enum)
-            next(name_enum)
-            continue
-        out += chr(c)
-        if c >= 0xC1:
-            idx2, c2 = next(name_enum)
-            out += chr(c2)
-        if c >= 0xE0:
-            idx2, c2 = next(name_enum)
-            out += chr(c2)
-        if c >= 0xF0:
-            idx2, c2 = next(name_enum)
-            out += chr(c2)
-    return out, isTable
+    def get(self, name: str) -> Optional[Table]:
+        if name not in self.tables:
+            return None
 
+        table = self.tables[name]
+        if table.rows is None:
+            with self.ole.openstream(table.stream_name()) as stream:
+                reader = BinaryReader(stream)
+                table.read_rows(reader, self.string_pool)
+        return table
 
-# NOTE: very likely that this function isn't quite working yet
-# works using the utf-8 character encoding
-def encode_streamname_utf8(name, table=False):
-    out = bytes()
-    if table:
-        out += chr(0xE4)
-        out += chr(0xA1)
-        out += chr(0x80)
-    name_enum = enumerate(name)
-    for idx, c in name_enum:
-        if ord(c) < 0x80 and utf2mime(ord(c)) >= 0:
-            ch = utf2mime(ord(c))
-            next_ch = -1
-            if idx + 1 < len(name):
-                if ord(name[idx + 1]) < 0x80:
-                    next_ch = utf2mime(ord(name[idx + 1]))
-            if next_ch == -1:
-                out += chr(0xE4)
-                out += chr(0xA0)
-                out += chr(0x80 | ch)
-            else:
-                out += chr(0xE3 + (next_ch >> 5))
-                out += chr(0xA0 ^ next_ch)
-                out += chr(0x80 | ch)
-                next(name_enum)
-        else:
-            out += chr(c)
-    return out
+    def __getitem__(self, name: str) -> Table:
+        table = self.get(name)
+        if table is None:
+            raise KeyError(f"Table '{name}' not found in package")
+        return table
+
+    def __contains__(self, name: str) -> bool:
+        return name in self.tables
+
+    def __iter__(self) -> Iterator[Table]:
+        return iter(self.tables.values())
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def close(self):
+        if self.ole is not None:
+            self.ole.close()
+            self.ole = None
