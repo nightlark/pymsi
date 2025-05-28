@@ -16,8 +16,7 @@ description = "A pure Python library for reading and manipulating Windows Instal
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["pe", "installer", "ole", "msi"]
-license = "MIT"
-license-files = ["LICENSE", "NOTICE"]
+license = { text = "MIT License" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -26,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Operating System :: MacOS",
@@ -34,6 +34,7 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: System",
     "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
 ]
 dependencies = ["olefile"]
 dynamic = ["version"]
