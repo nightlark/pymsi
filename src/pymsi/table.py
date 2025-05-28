@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
+
 from pymsi import streamname
 from pymsi.column import Column
 from pymsi.reader import BinaryReader
@@ -29,9 +30,7 @@ class Table:
     def primary_key_indices(self) -> List[int]:
         return [index for index, column in enumerate(self.columns) if column.primary_key]
 
-    def _read_rows(
-        self, reader: BinaryReader, string_pool: StringPool
-    ) -> List[Dict]:
+    def _read_rows(self, reader: BinaryReader, string_pool: StringPool) -> List[Dict]:
         data_len = reader.size() - reader.tell()
         row_size = sum([c.width(string_pool.long_string_refs) for c in self.columns])
         num_rows = 0 if row_size == 0 else data_len // row_size

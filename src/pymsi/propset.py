@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Dict, Union
+from typing import Dict
 
 from pymsi.constants import BOM, PROPERTY_CODEPAGE
 
@@ -64,7 +63,6 @@ class PropertySet:
                     f"Property {name} ({value.type}) version {value.min_version} is not supported by file version {file_version}"
                 )
             self.properties[name] = value
-
 
     def get(self, name: int):
         prop = self.properties.get(name)

@@ -1,4 +1,5 @@
 from typing import List, Tuple
+
 from .codepage import CodePage
 from .reader import BinaryReader
 

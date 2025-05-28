@@ -1,4 +1,5 @@
 from typing import Optional
+
 from pymsi.constants import (
     COL_FIELD_SIZE_MASK,
     COL_LOCALIZABLE_BIT,
