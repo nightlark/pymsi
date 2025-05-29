@@ -27,7 +27,7 @@ class Column:
 
         if bits:
             self.set_bits(bits)
-            
+
     @staticmethod
     def localize(value: str) -> str:
         if value and "|" in value:

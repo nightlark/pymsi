@@ -1,8 +1,8 @@
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
-    from .directory import Directory
     from .component import Component
+    from .directory import Directory
     from .icon import Icon
 
 
@@ -21,19 +21,24 @@ class Shortcut:
         self.icon_index: int = row["IconIndex"]
         self.show_command: int = row["ShowCmd"]
         self.working_directory: str = row["WkDir"]
-        
-    def _populate(self, directory_map: Dict[str, "Directory"], component_map: Dict[str, "Component"], icon_map: Dict[str, "Icon"]):
+
+    def _populate(
+        self,
+        directory_map: Dict[str, "Directory"],
+        component_map: Dict[str, "Component"],
+        icon_map: Dict[str, "Icon"],
+    ):
         self.directory = directory_map[self._directory]
         self.directory._add_shortcut(self)
-        
+
         self.component = component_map[self._component]
         self.component._add_shortcut(self)
-        
+
         if self._icon:
             self.icon = icon_map[self._icon]
         else:
             self.icon = None
-        
+
     def pretty_print(self, indent: int = 0):
         print(" " * indent + f"Shortcut: {self.name} ({self.id})")
         print(" " * (indent + 2) + f"Target: {self.target}")
@@ -47,6 +52,8 @@ class Shortcut:
             print(" " * (indent + 2) + "Icon: None")
         print(" " * (indent + 2) + f"Show Command: {self.show_command}")
         print(" " * (indent + 2) + f"Working Directory: {self.working_directory}")
-        print(" " * (indent + 2) + f"Component: {self.component.id} ({self.component.directory.name})")
+        print(
+            " " * (indent + 2) + f"Component: {self.component.id} ({self.component.directory.name})"
+        )
         if self.directory:
             print(" " * (indent + 2) + f"Directory: {self.directory.name} ({self.directory.id})")

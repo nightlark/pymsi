@@ -84,7 +84,7 @@ class Summary:
         if isinstance(value, int):
             return value
         return None
-    
+
     def __str__(self):
         props = []
         if self.arch():

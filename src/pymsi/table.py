@@ -1,7 +1,7 @@
 import copy
 from typing import Dict, List, Optional
 
-from pymsi import category, streamname
+from pymsi import streamname
 from pymsi.column import Column
 from pymsi.reader import BinaryReader
 from pymsi.stringpool import StringPool
@@ -55,7 +55,7 @@ class Table:
             else:
                 self.rows = self._read_rows(reader, string_pool)
         return self.rows
-    
+
     def get(self, row: int, localize: bool = False) -> Dict:
         if self.rows is None:
             raise ValueError("Rows not read yet, call read_rows() first")
@@ -66,7 +66,7 @@ class Table:
                 if column.localizable:
                     row_data[column.name] = Column.localize(row_data[column.name])
         return row_data
-    
+
     def iter(self, localize: bool = False):
         if self.rows is None:
             raise ValueError("Rows not read yet, call read_rows() first")

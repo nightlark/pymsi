@@ -1,4 +1,4 @@
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 
 if TYPE_CHECKING:
     from .component import Component
@@ -26,11 +26,11 @@ class Registry:
         # Value has unique parsing requirements, but I'm not doing that here
         self.value: Optional[str] = row["Value"]
         self._component: str = row["Component_"]
-        
+
     def _populate(self, component_map: Dict[str, "Component"]):
         self.component = component_map[self._component]
         self.component._add_registry_key(self)
-        
+
     def pretty_print(self, indent: int = 0):
         print(" " * indent + f"Registry Key: {self.id}")
         print(" " * (indent + 2) + f"Key: {self.root}\\{self.key}")
@@ -38,4 +38,6 @@ class Registry:
             print(" " * (indent + 2) + f"Name: {self.name}")
         if self.value is not None:
             print(" " * (indent + 2) + f"Value: {self.value}")
-        print(" " * (indent + 2) + f"Component: {self.component.id} ({self.component.directory.name})")
+        print(
+            " " * (indent + 2) + f"Component: {self.component.id} ({self.component.directory.name})"
+        )

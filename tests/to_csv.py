@@ -3,6 +3,7 @@ import csv
 import pymsi
 from pymsi.table import Table
 
+
 def export_to_csv(table: Table, filename: str):
     fieldnames = table[0].keys()
 
@@ -10,6 +11,7 @@ def export_to_csv(table: Table, filename: str):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(list(table))
+
 
 with pymsi.Package("powertoys.msi") as msi:
     print(f"MSI file: {msi.filename}")

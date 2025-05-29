@@ -1,4 +1,3 @@
-
 import copy
 from typing import Iterator, Optional
 
@@ -14,6 +13,7 @@ from pymsi.tables import TABLE_COLUMNS, TABLE_TABLES, TABLE_VALIDATION
 
 from .stringpool import StringPool
 from .summary import Summary
+
 
 class Package:
     def __init__(self, filename):
@@ -94,7 +94,9 @@ class Package:
 
                 column = self.tables[table_name].column(column_name)
                 if column is None:
-                    print(f"Warning: Column {column_name} not found in table {table_name}, skipping validation")
+                    print(
+                        f"Warning: Column {column_name} not found in table {table_name}, skipping validation"
+                    )
                     continue
                 if is_nullable:
                     column.mark_nullable()
