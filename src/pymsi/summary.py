@@ -84,12 +84,27 @@ class Summary:
         if isinstance(value, int):
             return value
         return None
-
-    def __repr__(self):
-        return (
-            f"Summary(arch={self.arch()}, author={self.author()}, "
-            f"comments={self.comments()}, creating_application={self.creating_application()}, "
-            f"creation_time={self.creation_time()}, languages={self.languages()}, "
-            f"subject={self.subject()}, title={self.title()}, uuid={self.uuid()}, "
-            f"word_count={self.word_count()})"
-        )
+    
+    def __str__(self):
+        props = []
+        if self.arch():
+            props.append(("arch", self.arch()))
+        if self.author():
+            props.append(("author", self.author()))
+        if self.comments():
+            props.append(("comments", self.comments()))
+        if self.creating_application():
+            props.append(("creating_application", self.creating_application()))
+        if self.creation_time():
+            props.append(("creation_time", self.creation_time()))
+        if self.languages():
+            props.append(("languages", self.languages()))
+        if self.subject():
+            props.append(("subject", self.subject()))
+        if self.title():
+            props.append(("title", self.title()))
+        if self.uuid():
+            props.append(("uuid", self.uuid()))
+        if self.word_count() is not None:
+            props.append(("word_count", self.word_count()))
+        return f"Summary({', '.join(f'{k}={repr(v)}' for k, v in props)})"

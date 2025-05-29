@@ -27,6 +27,12 @@ class Column:
 
         if bits:
             self.set_bits(bits)
+            
+    @staticmethod
+    def localize(value: str) -> str:
+        if value and "|" in value:
+            return value.split("|", 1)[1]
+        return value
 
     def set_bits(self, bits: int):
         field_size = bits & COL_FIELD_SIZE_MASK
@@ -113,7 +119,7 @@ class Column:
         self.size = 2
         return self
 
-    def __repr__(self):
+    def __str__(self):
         ret = f"Column({repr(self.name)}, {self.type}"
         if self.localizable:
             ret += ", localizable"

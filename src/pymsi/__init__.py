@@ -5,3 +5,5 @@ except ModuleNotFoundError:
     __version_tuple__ = ()
 
 from .pymsi import *  # noqa: F403
+from .msi import * # noqa: F403
+from .package import Package
