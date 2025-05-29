@@ -1,6 +1,7 @@
+import copy
 from typing import Dict, List, Optional
 
-from pymsi import streamname
+from pymsi import category, streamname
 from pymsi.column import Column
 from pymsi.reader import BinaryReader
 from pymsi.stringpool import StringPool
@@ -47,10 +48,31 @@ class Table:
         rows = [dict(zip([col.name for col in self.columns], row)) for row in rows]
         return rows
 
-    def read_rows(self, reader: BinaryReader, string_pool: StringPool) -> List[Dict]:
+    def read_rows(self, reader: Optional[BinaryReader], string_pool: StringPool) -> List[Dict]:
         if self.rows is None:
-            self.rows = self._read_rows(reader, string_pool)
+            if reader is None:
+                self.rows = []
+            else:
+                self.rows = self._read_rows(reader, string_pool)
         return self.rows
+    
+    def get(self, row: int, localize: bool = False) -> Dict:
+        if self.rows is None:
+            raise ValueError("Rows not read yet, call read_rows() first")
+        row_data = self.rows[row]
+        if localize:
+            row_data = copy.copy(row_data)
+            for column in self.columns:
+                if column.localizable:
+                    row_data[column.name] = Column.localize(row_data[column.name])
+        return row_data
+    
+    def iter(self, localize: bool = False):
+        if self.rows is None:
+            raise ValueError("Rows not read yet, call read_rows() first")
+        if localize:
+            return (self.get(row, localize=True) for row in range(len(self.rows)))
+        return iter(self.rows)
 
     def __getitem__(self, row: int) -> Dict:
         if self.rows is None:
