@@ -1,15 +1,18 @@
 if __name__ == "__main__":
-    import pymsi, sys, traceback
-    
+    import sys
+    import traceback
+
+    import pymsi
+
     if len(sys.argv) < 2:
         print("Usage: python -m pymsi <command> [path_to_msi_file]")
-    
+
     command = sys.argv[1].lower().strip()
 
     package = None
     if len(sys.argv) > 2:
         package = pymsi.Package(sys.argv[2])
-        
+
     if command == "tables":
         if package is None:
             print("No MSI file provided. Use 'tables <path_to_msi_file>' to list tables.")
@@ -46,6 +49,6 @@ if __name__ == "__main__":
     else:
         print(f"Unknown command: {command}")
         print("Use 'help' to see available commands.")
-    
+
     if package is not None:
         package.close()

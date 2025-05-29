@@ -1,1 +1,1 @@
-from .msi import * # noqa: F403
+from .msi import *  # noqa: F403

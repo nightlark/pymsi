@@ -10,7 +10,7 @@ class Media:
         self.cabinet: Optional[str] = row["Cabinet"]
         self.volume_label: Optional[str] = row["VolumeLabel"]
         self.source: Optional[str] = row["Source"]
-        
+
     def pretty_print(self, indent: int = 0):
         print(" " * indent + f"Media: {self.id}")
         print(" " * (indent + 2) + f"Last Sequence: {self.last_sequence}")
