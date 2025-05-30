@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional, Type, TypeVar, Union
 
+from pymsi import streamname
 from pymsi.msi.component import Component
 from pymsi.msi.directory import Directory
 from pymsi.msi.file import File
@@ -14,7 +15,7 @@ T = TypeVar("T")
 
 
 class Msi:
-    def __init__(self, package: Package):
+    def __init__(self, package: Package, load_data: bool = False):
         self.package = package
 
         self.components = self._load_map(Component, "Component")
@@ -25,6 +26,9 @@ class Msi:
         self.remove_files = self._load_map(RemoveFile, "RemoveFile")
         self.shortcuts = self._load_map(Shortcut, "Shortcut")
         self.medias = self._load_map(Media, "Media")
+
+        if load_data:
+            self._load_media()
 
         self._populate_map(self.components, self.directories)
         self._populate_map(self.directories, self.directories)
@@ -61,6 +65,33 @@ class Msi:
                     processed.add(key)
             if len(map) == before_count:
                 break
+
+    def _load_media(self):
+        for media in self.medias.values():
+            if media._cabinet is None:
+                media._populate(None)
+            elif media._cabinet.startswith("#"):
+                # Inside the .msi file
+                stream_name = streamname.encode_unicode(media._cabinet[1:])
+                if not self.package.ole.exists(stream_name):
+                    raise ValueError(
+                        f"Media file '{media._cabinet[1:]}' not found in the .msi file"
+                    )
+                with self.package.ole.openstream(stream_name) as stream:
+                    media._populate(stream.read())
+            else:
+                # External cabinet file
+                path = (self.package.path.parent / media._cabinet).resolve(True)
+                # Check for path traversal attempts
+                if self.package.path.parent not in path.parents:
+                    raise ValueError(
+                        f"Media file path '{media._cabinet}' attempts to access parent directories"
+                    )
+
+                if not path.is_file():
+                    raise ValueError(f"External media file '{media._cabinet}' not found")
+                with path.open("rb") as f:
+                    media._populate(f.read())
 
     def _load_root(self):
         roots = [directory for directory in self.directories.values() if directory.parent is None]

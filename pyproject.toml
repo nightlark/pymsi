@@ -63,6 +63,7 @@ pythonpath = "src"
 [tool.ruff]
 line-length = 100
 indent-width = 4
+extend-exclude = ["src/pymsi/thirdparty"]
 
 [tool.ruff.lint]
 # ruff defaults: E4, E7, E9, F

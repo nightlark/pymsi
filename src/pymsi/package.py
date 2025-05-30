@@ -1,4 +1,5 @@
 import copy
+from pathlib import Path
 from typing import Iterator, Optional
 
 import olefile
@@ -16,15 +17,16 @@ from .summary import Summary
 
 
 class Package:
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, path: Path):
+        self.path = path.resolve(True)
+        self.file = self.path.open("rb")
         self.tables = {}
         self.ole = None
         self.summary = None
         self._load()
 
     def _load(self):
-        self.ole = olefile.OleFileIO(self.filename)
+        self.ole = olefile.OleFileIO(self.file)
 
         with self.ole.openstream(SUMMARY_INFO_STREAM_NAME) as stream:
             self.summary = Summary(stream)
@@ -146,6 +148,4 @@ class Package:
         self.close()
 
     def close(self):
-        if self.ole is not None:
-            self.ole.close()
-            self.ole = None
+        self.file.close()
