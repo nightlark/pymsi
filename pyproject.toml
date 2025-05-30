@@ -36,7 +36,7 @@ classifiers = [
     "Topic :: Utilities",
     "License :: OSI Approved :: MIT License",
 ]
-dependencies = ["olefile"]
+dependencies = ["olefile", "cabarchive"]
 dynamic = ["version"]
 
 [project.optional-dependencies]

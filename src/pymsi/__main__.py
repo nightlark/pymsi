@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 if __name__ == "__main__":
     import sys
     import traceback
@@ -11,8 +14,8 @@ if __name__ == "__main__":
 
     package = None
     if len(sys.argv) > 2:
-        package = pymsi.Package(sys.argv[2])
-
+        package = pymsi.Package(Path(sys.argv[2]))
+        
     if command == "tables":
         if package is None:
             print("No MSI file provided. Use 'tables <path_to_msi_file>' to list tables.")
@@ -27,19 +30,19 @@ if __name__ == "__main__":
         if package is None:
             print("No MSI file provided. Use 'dump <path_to_msi_file>' to dump contents.")
         else:
-            msi = pymsi.Msi(package)
+            msi = pymsi.Msi(package, True)
             msi.pretty_print()
     elif command == "test":
         if package is None:
             print("No MSI file provided. Use 'test <path_to_msi_file>' to check validity.")
         else:
             try:
-                pymsi.Msi(package)
+                pymsi.Msi(package, True)
             except Exception as e:
-                print(f"Invalid .msi file: {package.filename}")
+                print(f"Invalid .msi file: {package.path}")
                 traceback.print_exc()
             else:
-                print(f"Valid .msi file: {package.filename}")
+                print(f"Valid .msi file: {package.path}")
     elif command == "help":
         print("Available commands:")
         print("  tables - List all tables in the MSI file")
