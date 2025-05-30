@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 if __name__ == "__main__":
     import sys
     import traceback
@@ -15,7 +14,7 @@ if __name__ == "__main__":
     package = None
     if len(sys.argv) > 2:
         package = pymsi.Package(Path(sys.argv[2]))
-        
+
     if command == "tables":
         if package is None:
             print("No MSI file provided. Use 'tables <path_to_msi_file>' to list tables.")

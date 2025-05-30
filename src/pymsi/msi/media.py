@@ -19,7 +19,7 @@ class Media:
             return
         self.cabinet = Cabinet(archive)
         self.cabinet.process()
-        
+
     def pretty_print(self, indent: int = 0):
         print(" " * indent + f"Media: {self.id}")
         print(" " * (indent + 2) + f"Last Sequence: {self.last_sequence}")

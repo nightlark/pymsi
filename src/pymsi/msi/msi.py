@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Optional, Type, TypeVar, Union
 
 from pymsi import streamname
 from pymsi.msi.component import Component
@@ -11,11 +11,8 @@ from pymsi.msi.remove_file import RemoveFile
 from pymsi.msi.shortcut import Shortcut
 from pymsi.package import Package
 
-from pymsi.thirdparty.refinery.cab import CabDisk, Cabinet
-from pymsi.thirdparty.refinery.structures import StructReader
+T = TypeVar("T")
 
-
-T = TypeVar('T')
 
 class Msi:
     def __init__(self, package: Package, load_data: bool = False):
@@ -29,10 +26,10 @@ class Msi:
         self.remove_files = self._load_map(RemoveFile, "RemoveFile")
         self.shortcuts = self._load_map(Shortcut, "Shortcut")
         self.medias = self._load_map(Media, "Media")
-        
+
         if load_data:
             self._load_media()
-        
+
         self._populate_map(self.components, self.directories)
         self._populate_map(self.directories, self.directories)
         self._populate_map(self.files, self.components, self.medias)
@@ -41,8 +38,7 @@ class Msi:
         self._populate_map(self.shortcuts, self.directories, self.components, self.icons)
 
         self.root = self._load_root()
-        
-    
+
     def _load_map(self, type_val: Type[T], name: str):
         table = self.package.get(name)
         ret: Union[Dict[str, T], Dict[int, T]] = {}
@@ -69,7 +65,7 @@ class Msi:
                     processed.add(key)
             if len(map) == before_count:
                 break
-            
+
     def _load_media(self):
         for media in self.medias.values():
             if media._cabinet is None:
@@ -78,7 +74,9 @@ class Msi:
                 # Inside the .msi file
                 stream_name = streamname.encode_unicode(media._cabinet[1:])
                 if not self.package.ole.exists(stream_name):
-                    raise ValueError(f"Media file '{media._cabinet[1:]}' not found in the .msi file")
+                    raise ValueError(
+                        f"Media file '{media._cabinet[1:]}' not found in the .msi file"
+                    )
                 with self.package.ole.openstream(stream_name) as stream:
                     media._populate(stream.read())
             else:
@@ -86,14 +84,15 @@ class Msi:
                 path = (self.package.path.parent / media._cabinet).resolve(True)
                 # Check for path traversal attempts
                 if self.package.path.parent not in path.parents:
-                    raise ValueError(f"Media file path '{media._cabinet}' attempts to access parent directories")
-                
+                    raise ValueError(
+                        f"Media file path '{media._cabinet}' attempts to access parent directories"
+                    )
+
                 if not path.is_file():
                     raise ValueError(f"External media file '{media._cabinet}' not found")
-                with path.open('rb') as f:
+                with path.open("rb") as f:
                     media._populate(f.read())
-            
-        
+
     def _load_root(self):
         roots = [directory for directory in self.directories.values() if directory.parent is None]
 

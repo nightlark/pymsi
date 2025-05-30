@@ -20,19 +20,23 @@ class File:
         self.language = [lang.strip() for lang in langs if lang.strip()]
         self.attributes: int = row["Attributes"]
         self.sequence: int = row["Sequence"]
-        
+
     def resolve(self) -> CabFile:
         if not hasattr(self.media, "cabinet"):
-            raise ValueError(f"Media for file {self.id} ({self.name}) is not resolved. Make sure load_data is set to True.")
-        
+            raise ValueError(
+                f"Media for file {self.id} ({self.name}) is not resolved. Make sure load_data is set to True."
+            )
+
         if self.media.cabinet is None:
-            raise ValueError(f"Media for file {self.id} ({self.name}) does not have an associated .cab file.")
-        
+            raise ValueError(
+                f"Media for file {self.id} ({self.name}) does not have an associated .cab file."
+            )
+
         for file in self.media.cabinet.get_files():
             if file.name == self.id:
                 return file
         raise ValueError(f"File {self.name} not found in media cabinet {self.media.cabinet}.")
-        
+
     def _populate(self, component_map: Dict[str, "Component"], media_map: Dict[int, "Media"]):
         self.component = component_map[self._component]
         self.component._add_file(self)
@@ -49,8 +53,13 @@ class File:
         print(" " * (indent + 2) + f"Language(s): {', '.join(self.language)}")
         print(" " * (indent + 2) + f"Attributes: {hex(self.attributes)} ({self.attributes})")
         print(" " * (indent + 2) + f"Sequence: {self.sequence}")
-        print(" " * (indent + 2) + f"Component: {self.component.id} ({self.component.directory.name})")
-        print(" " * (indent + 2) + f"Media: {self.media.id} (Last Sequence: {self.media.last_sequence})")
+        print(
+            " " * (indent + 2) + f"Component: {self.component.id} ({self.component.directory.name})"
+        )
+        print(
+            " " * (indent + 2)
+            + f"Media: {self.media.id} (Last Sequence: {self.media.last_sequence})"
+        )
         if hasattr(self.media, "cabinet") and self.media.cabinet is not None:
             file = self.resolve()
             print(" " * (indent + 2) + f"Cabinet Size: {file.size} bytes")
@@ -58,7 +67,7 @@ class File:
                 print(" " * (indent + 2) + f"Cabinet Date: {file.date}")
             if file.time is not None:
                 print(" " * (indent + 2) + f"Cabinet Time: {file.time}")
-            print(" " * (indent + 2) + f"Cabinet Attributes: {hex(file.attributes)} ({file.attributes})")
-            
-            
-            
+            print(
+                " " * (indent + 2)
+                + f"Cabinet Attributes: {hex(file.attributes)} ({file.attributes})"
+            )
