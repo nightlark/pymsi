@@ -13,6 +13,19 @@ class Directory:
         self._parent: str = row["Directory_Parent"]
         self.name: str = row["DefaultDir"]
 
+        # DefaultDir can be in target:source format
+        # Target is the actual install location, but files could be overlapped
+        # If we decide to install all files
+        if ":" in self.name:
+            print(f"Warning: Directory has a target/source name: {self.name}")
+            print("The directory structure may not be accurate.")
+            target_dir, source_dir = self.name.split(":", 1)
+            self.name = source_dir
+
+        # Localize name
+        if "|" in self.name:
+            self.name = self.name.split("|", 1)[0]
+
         self.children: Dict[str, "Directory"] = {}
         self.components: Dict[str, "Component"] = {}
         self.shortcuts: Dict[str, "Shortcut"] = {}
