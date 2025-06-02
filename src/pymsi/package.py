@@ -73,7 +73,7 @@ class Package:
     def _read_validations(self):
         if not self.ole.exists(TABLE_VALIDATION.stream_name()):
             return
-        
+
         nonexistent_tables = set()
         with self.ole.openstream(TABLE_VALIDATION.stream_name()) as stream:
             rows = TABLE_VALIDATION._read_rows(BinaryReader(stream), self.string_pool)
