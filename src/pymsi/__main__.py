@@ -4,13 +4,13 @@
 # https://stackoverflow.com/questions/9734978/view-msi-strings-in-binary
 
 
+import sys
+import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import List
-import sys
-import traceback
-import pymsi
 
+import pymsi
 from pymsi.msi.directory import Directory
 from pymsi.thirdparty.refinery.cab import CabFolder
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             output_folder = Path(sys.argv[3]) if len(sys.argv) > 3 else Path.cwd()
             print(f"Loading MSI file: {package.path}")
             msi = pymsi.Msi(package, True)
-            
+
             folders: List[CabFolder] = []
             for media in msi.medias.values():
                 if media.cabinet and media.cabinet.disks:
@@ -93,10 +93,10 @@ if __name__ == "__main__":
                             for folder in directory.folders:
                                 if folder not in folders:
                                     folders.append(folder)
-                                    
+
             total_folders = len(folders)
             print(f"Found {total_folders} folders in .cab files")
-            
+
             futures = {}
             executor = ThreadPoolExecutor()
             completed_count = 0
@@ -104,7 +104,7 @@ if __name__ == "__main__":
                 for folder in folders:
                     future = executor.submit(folder.decompress)
                     futures[future] = folder
-                
+
                 for future in as_completed(futures):
                     try:
                         future.result()
@@ -112,7 +112,8 @@ if __name__ == "__main__":
                         folder = futures[future]
                         print(
                             f"\r{completed_count} / {total_folders} ({completed_count / total_folders * 100:.1f}%) Decompressed folder: {folder}",
-                            end='', flush=True
+                            end="",
+                            flush=True,
                         )
                     except KeyboardInterrupt as e:
                         raise e
@@ -122,7 +123,7 @@ if __name__ == "__main__":
                 for future in futures:
                     future.cancel()
                 executor.shutdown(wait=False)
-            
+
             print("\nDecompressing folders completed.")
             print(f"Extracting files from {package.path} to {output_folder}")
             extract_root(msi.root, output_folder)
