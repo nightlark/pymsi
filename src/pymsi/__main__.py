@@ -4,9 +4,13 @@
 # https://stackoverflow.com/questions/9734978/view-msi-strings-in-binary
 
 
+import sys
+import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import List
 
+import pymsi
 from pymsi.msi.directory import Directory
 from pymsi.thirdparty.refinery.cab import CabFolder
 
@@ -35,12 +39,6 @@ def extract_root(root: Directory, output: Path, is_root: bool = True):
 
 
 if __name__ == "__main__":
-    import asyncio
-    import sys
-    import traceback
-
-    import pymsi
-
     if len(sys.argv) < 2:
         print("Usage: python -m pymsi <command> [path_to_msi_file] [output_folder]")
 
@@ -86,6 +84,7 @@ if __name__ == "__main__":
             output_folder = Path(sys.argv[3]) if len(sys.argv) > 3 else Path.cwd()
             print(f"Loading MSI file: {package.path}")
             msi = pymsi.Msi(package, True)
+
             folders: List[CabFolder] = []
             for media in msi.medias.values():
                 if media.cabinet and media.cabinet.disks:
@@ -94,27 +93,36 @@ if __name__ == "__main__":
                             for folder in directory.folders:
                                 if folder not in folders:
                                     folders.append(folder)
-            print(f"Found {len(folders)} folders in .cab files")
 
-            # for idx, folder in enumerate(folders):
-            #     print(f"\r{idx + 1} / {total} ({(idx + 1) / total * 100:.1f}%) Decompressing folder: {folder}", end="")
-            #     folder.decompress()
-            async def decompress_folder(folder, idx, total):
-                folder.decompress()
-                print(
-                    f"\r{idx + 1} / {total} ({(idx + 1) / total * 100:.1f}%) Decompressed folder: {folder}",
-                    end="",
-                )
+            total_folders = len(folders)
+            print(f"Found {total_folders} folders in .cab files")
 
-            async def decompress_all_folders(folders):
-                tasks = []
-                for idx, folder in enumerate(folders):
-                    task = asyncio.create_task(decompress_folder(folder, idx, len(folders)))
-                    tasks.append(task)
-                await asyncio.gather(*tasks)
+            futures = {}
+            executor = ThreadPoolExecutor()
+            completed_count = 0
+            try:
+                for folder in folders:
+                    future = executor.submit(folder.decompress)
+                    futures[future] = folder
 
-            # Run the async decompression
-            asyncio.run(decompress_all_folders(folders))
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                        completed_count += 1
+                        folder = futures[future]
+                        print(
+                            f"\r{completed_count} / {total_folders} ({completed_count / total_folders * 100:.1f}%) Decompressed folder: {folder}",
+                            end="",
+                            flush=True,
+                        )
+                    except KeyboardInterrupt as e:
+                        raise e
+                    except Exception as e:
+                        print(f"\nError decompressing folder {futures[future]}: {e}", flush=True)
+            finally:
+                for future in futures:
+                    future.cancel()
+                executor.shutdown(wait=False)
 
             print("\nDecompressing folders completed.")
             print(f"Extracting files from {package.path} to {output_folder}")
