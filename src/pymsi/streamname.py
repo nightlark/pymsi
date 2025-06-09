@@ -1,20 +1,6 @@
-# Based on MSI file format documentation/code from:
-# https://github.com/GNOME/msitools/blob/4343c982665c8b2ae8c6791ade9f93fe92caf79c/libmsi/table.c
-# https://github.com/mdsteele/rust-msi/blob/master/src/internal/streamname.rs
-# https://stackoverflow.com/questions/9734978/view-msi-strings-in-binary
+from typing import Tuple
 
-# Windows Installer MST (transform)
-MST_CLSID = "{000c1082-0000-0000-c000-000000000046}"
-# Windows Installer MSI and MSM (merge)
-MSI_CLSID = "{000c1084-0000-0000-c000-000000000046}"
-# Windows Installer Patch MSP
-MSP_CLSID = "{000c1086-0000-0000-c000-000000000046}"
-
-DIGITAL_SIGNATURE_STREAM_NAME = "\u0005DigitalSignature"
-MSI_DIGITAL_SIGNATURE_EX_STREAM_NAME = "\u0005MsiDigitalSignatureEx"
-SUMMARY_INFO_STREAM_NAME = "\u0005SummaryInformation"
-
-TABLE_PREFIX = "\u4840"
+from .constants import TABLE_PREFIX, TABLE_PREFIX_UTF8
 
 
 # variant of base64 encoding
@@ -45,16 +31,15 @@ def mime2utf(x):
     return "_"
 
 
-def is_valid_streamname(name, isTable=False):
+def is_valid(name, isTable=False):
     if not name or (not isTable and name.startswith(TABLE_PREFIX)):
         return False
     else:
         # NOTE: this may not be 100% accurate; need to check if it is a byte count using a particular encoding
-        return len(encode_streamname_unicode(name, isTable)) <= 31
+        return len(encode_unicode(name, isTable)) <= 31
 
 
-# this works directly with python unicode string
-def decode_streamname_unicode(name):
+def decode_unicode(name: str) -> Tuple[str, bool]:
     if len(name) < 1:
         return str(), False
     out = str()
@@ -77,7 +62,7 @@ def decode_streamname_unicode(name):
 
 
 # encode using unicode
-def encode_streamname_unicode(name, isTable=False):
+def encode_unicode(name: str, isTable: bool = False) -> str:
     out = str()
     if isTable:
         out += TABLE_PREFIX
@@ -100,11 +85,11 @@ def encode_streamname_unicode(name, isTable=False):
 
 
 # this operates on utf-8 encoded bytes
-def decode_streamname_utf8(name):
+def decode_utf8(name):
     out = str()
     isTable = False
     name_enum = enumerate(name)
-    if name.startswith(b"\xe4\xa1\x80"):
+    if name.startswith(TABLE_PREFIX_UTF8):
         isTable = True
         next(name_enum)
         next(name_enum)
@@ -140,7 +125,7 @@ def decode_streamname_utf8(name):
 
 # NOTE: very likely that this function isn't quite working yet
 # works using the utf-8 character encoding
-def encode_streamname_utf8(name, table=False):
+def encode_utf8(name, table=False):
     out = bytes()
     if table:
         out += chr(0xE4)
