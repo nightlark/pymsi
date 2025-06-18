@@ -34,7 +34,7 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     environment:
       name: pypi
-      url: https://pypi.org/p/msi
+      url: https://pypi.org/p/python-msi
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
