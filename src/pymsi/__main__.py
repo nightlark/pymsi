@@ -38,9 +38,10 @@ def extract_root(root: Directory, output: Path, is_root: bool = True):
         extract_root(child, output / folder_name, False)
 
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) < 2:
-        print("Usage: python -m pymsi <command> [path_to_msi_file] [output_folder]")
+        print("Usage: pymsi <command> [path_to_msi_file] [output_folder]")
+        exit()
 
     command = sys.argv[1].lower().strip()
 
@@ -142,3 +143,6 @@ if __name__ == "__main__":
 
     if package is not None:
         package.close()
+
+if __name__ == "__main__":
+    main()

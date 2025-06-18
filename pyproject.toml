@@ -45,6 +45,7 @@ dev = ["build", "pre-commit"]
 docs = ["sphinx", "myst-parser"]
 
 [project.scripts]
+pymsi = "pymsi.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/nightlark/pymsi"
