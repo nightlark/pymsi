@@ -16,11 +16,13 @@ For more, see the [documentation](https://pymsi.readthedocs.io/en/latest/).
 
 ### Installation
 
-pymsi is available on PyPI:
+pymsi is available on PyPI (PEP 541 request for pymsi name is being processed):
 
 ```sh
-pip install msi
+pip install python-msi
 ```
+
+It is recommended to either install it in a virtual environment, or use a tool such as pipx or uv to avoid potential conflicts with other Python modules on the same system.
 
 ### Usage
 
@@ -28,6 +30,23 @@ To use pymsi as a library that gets called from other code:
 
 ```python
 import pymsi
+```
+
+To use pymsi as a command line tool:
+
+```bash
+pymsi <command> [path_to_msi_file] [output_folder]
+```
+
+Use the help command to see a list of supported commands:
+
+```bash
+Available commands:
+  tables - List all tables in the MSI file
+  dump - Dump the contents of the MSI file
+  test - Check if the file is a valid MSI file
+  extract - Extract files from the MSI file
+  help - Show this help message
 ```
 
 ## Getting Involved
