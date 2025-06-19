@@ -9,6 +9,8 @@
 
 A pure Python library for reading and manipulating Windows Installer (MSI) files. Based on the rust msi crate and msitools utilities.
 
+To get started `pip install python-msi`. To use it as a library, `import pymsi`. For the CLI utility, run `pymsi help` for a list of supported commands.
+
 Here are some links to pages that may be useful:
 
 [PyPI](https://pypi.org/project/msi/)
@@ -22,6 +24,7 @@ Here are some links to pages that may be useful:
    :maxdepth: 2
 
    self
+   msi_viewer
 ```
 
 ## License

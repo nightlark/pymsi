@@ -1,6 +1,7 @@
 import copy
+import io
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Union
 
 import olefile
 
@@ -17,9 +18,13 @@ from .summary import Summary
 
 
 class Package:
-    def __init__(self, path: Path):
-        self.path = path.resolve(True)
-        self.file = self.path.open("rb")
+    def __init__(self, path_or_bytesio: Union[Path, io.BytesIO]):
+        if isinstance(path_or_bytesio, io.BytesIO):
+            self.path = None
+            self.file = path_or_bytesio
+        else:
+            self.path = path_or_bytesio.resolve(True)
+            self.file = self.path.open("rb")
         self.tables = {}
         self.ole = None
         self.summary = None
@@ -151,4 +156,5 @@ class Package:
         self.close()
 
     def close(self):
-        self.file.close()
+        if self.file and hasattr(self.file, "close"):
+            self.file.close()
