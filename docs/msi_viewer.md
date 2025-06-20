@@ -17,6 +17,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   </div>
 
   <div id="msi-content">
+    <div id="current-file-display" style="display: none;"></div>
     <div class="tabs">
       <button class="tab-button active" data-tab="files">Files</button>
       <button class="tab-button" data-tab="tables">Tables</button>
@@ -131,6 +132,17 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     border-radius: 4px;
     color: #1565c0;
     font-weight: 500;
+  }
+
+  #current-file-display {
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: #f0f8ff;
+    border: 1px solid #b0d4f1;
+    border-radius: 4px;
+    color: #2c5282;
+    font-weight: 500;
+    text-align: center;
   }
 
   .tabs {
