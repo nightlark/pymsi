@@ -7,6 +7,7 @@ class MSIViewer {
     this.pymsi = null;
     this.currentPackage = null;
     this.currentMsi = null;
+    this.currentFileName = null;
     this.initElements();
     this.initEventListeners();
     this.loadPyodide();
@@ -17,6 +18,7 @@ class MSIViewer {
     this.fileInput = document.getElementById('msi-file-input');
     this.loadingIndicator = document.getElementById('loading-indicator');
     this.msiContent = document.getElementById('msi-content');
+    this.currentFileDisplay = document.getElementById('current-file-display');
     this.extractButton = document.getElementById('extract-button');
     this.filesList = document.getElementById('files-list');
     this.tableSelector = document.getElementById('table-selector');
@@ -103,6 +105,7 @@ class MSIViewer {
     if (!this.fileInput.files || this.fileInput.files.length === 0) return;
 
     const file = this.fileInput.files[0];
+    this.currentFileName = file.name;
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = 'Reading MSI file...';
 
@@ -136,7 +139,11 @@ class MSIViewer {
       await this.loadStreams();
       console.log('Streams loaded successfully');
 
-      this.msiContent.style.display = 'block';
+      // Enable the extract button and show current file
+      this.extractButton.disabled = false;
+      this.currentFileDisplay.textContent = `Currently loaded: ${this.currentFileName}`;
+      this.currentFileDisplay.style.display = 'block';
+
       this.loadingIndicator.style.display = 'none';
     } catch (error) {
       this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
@@ -418,11 +425,15 @@ class MSIViewer {
       // Generate ZIP blob
       const zipBlob = await zip.generateAsync({ type: 'blob' });
 
+      // Create filename based on MSI name
+      const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
+      const zipFileName = `${baseFileName}_extracted.zip`;
+
       // Trigger download
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'extracted_files.zip';
+      a.download = zipFileName;
       document.body.appendChild(a);
       a.click();
 
