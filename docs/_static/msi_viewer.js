@@ -136,7 +136,9 @@ class MSIViewer {
       await this.loadStreams();
       console.log('Streams loaded successfully');
 
-      this.msiContent.style.display = 'block';
+      // Enable the extract button
+      this.extractButton.disabled = false;
+
       this.loadingIndicator.style.display = 'none';
     } catch (error) {
       this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
