@@ -6,6 +6,9 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 
 <div id="msi-viewer-app">
   <div class="file-selector">
+    <div style="margin-bottom: 1rem;">
+      <button id="load-example-file-button" type="button" class="example-file-btn">Load example file</button>
+    </div>
     <div class="file-input-container">
       <input type="file" id="msi-file-input" accept=".msi" />
       <label for="msi-file-input" class="file-input-label">
@@ -213,6 +216,26 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     max-height: 500px;
     overflow-y: auto;
     border: 1px solid #ddd;
+  }
+
+  .example-file-btn {
+    font-size: 0.95em;
+    padding: 0.3em 0.9em;
+    background: #f5f5f5;
+    color: #007acc;
+    border: 1px solid #b0d4f1;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+    vertical-align: middle;
+  }
+  .example-file-btn:hover,
+  .example-file-btn:focus {
+    background: #e3f2fd;
+    color: #005a9e;
+    border-color: #90caf9;
+    outline: none;
   }
 </style>
 

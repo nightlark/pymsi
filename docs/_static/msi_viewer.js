@@ -28,6 +28,7 @@ class MSIViewer {
     this.streamsContent = document.getElementById('streams-content');
     this.tabButtons = document.querySelectorAll('.tab-button');
     this.tabPanes = document.querySelectorAll('.tab-pane');
+    this.loadExampleFileButton = document.getElementById('load-example-file-button');
   }
 
   // Set up event listeners
@@ -43,6 +44,9 @@ class MSIViewer {
         this.switchTab(tabName);
       });
     });
+
+    // New file loading buttons
+    this.loadExampleFileButton.addEventListener('click', this.handleLoadExampleFile.bind(this));
   }
 
   // Switch between tabs
@@ -100,18 +104,14 @@ class MSIViewer {
     }
   }
 
-  // Handle file selection
-  async handleFileSelect(event) {
-    if (!this.fileInput.files || this.fileInput.files.length === 0) return;
-
-    const file = this.fileInput.files[0];
-    this.currentFileName = file.name;
+  // Load MSI file from ArrayBuffer (used for file input, example, and URL)
+  async loadMsiFileFromArrayBuffer(arrayBuffer, fileName = 'uploaded.msi') {
+    this.currentFileName = fileName;
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = 'Reading MSI file...';
 
     try {
       // Read the file as an ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer();
       const msiBinaryData = new Uint8Array(arrayBuffer);
 
       // Write the file to Pyodide's virtual file system
@@ -148,6 +148,31 @@ class MSIViewer {
     } catch (error) {
       this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
       console.error('Error processing MSI:', error);
+    }
+  }
+
+  // Handle file selection
+  async handleFileSelect(event) {
+    if (!this.fileInput.files || this.fileInput.files.length === 0) return;
+
+    const file = this.fileInput.files[0];
+    const arrayBuffer = await file.arrayBuffer();
+    await this.loadMsiFileFromArrayBuffer(arrayBuffer, file.name);
+  }
+
+  // Handle loading the example file from the server
+  async handleLoadExampleFile() {
+    const exampleUrl = '_static/example.msi';
+    this.loadingIndicator.style.display = 'block';
+    this.loadingIndicator.textContent = 'Fetching example file...';
+    try {
+      const response = await fetch(exampleUrl);
+      if (!response.ok) throw new Error(`Failed to fetch example file (${response.status})`);
+      const arrayBuffer = await response.arrayBuffer();
+      await this.loadMsiFileFromArrayBuffer(arrayBuffer, 'example.msi');
+    } catch (error) {
+      this.loadingIndicator.textContent = `Error loading example file: ${error.message}`;
+      console.error('Error loading example file:', error);
     }
   }
 
