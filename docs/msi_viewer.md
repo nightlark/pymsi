@@ -96,11 +96,21 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     display: inline-block;
   }
 
+  .file-input-container.dragover .file-input-label {
+    background: #005a9e;
+    color: #e3f2fd;
+    border: 2px solid #90caf9;
+    box-shadow: 0 2px 16px 0 rgba(0, 122, 204, 0.22);
+  }
+
   #msi-file-input {
     position: absolute;
     opacity: 0;
     width: 100%;
     height: 100%;
+    left: 0;
+    top: 0;
+    z-index: 2;
     cursor: pointer;
   }
 
@@ -114,17 +124,21 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s, box-shadow 0.2s, border 0.2s, color 0.2s;
     border: 2px solid transparent;
+    box-shadow: none;
+    position: relative;
+    z-index: 1;
   }
 
-  .file-input-label:hover {
-    background: #005a9e;
-  }
-
+  .file-input-label:hover,
+  .file-input-container:hover .file-input-label,
   .file-input-label:focus-within {
-    outline: 2px solid #007acc;
-    outline-offset: 2px;
+    background: #005a9e;
+    color: #e3f2fd;
+    border: 2px solid #90caf9;
+    box-shadow: 0 2px 12px 0 rgba(0, 122, 204, 0.18);
+    outline: none;
   }
 
   #loading-indicator {
@@ -238,6 +252,30 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     outline: none;
   }
 </style>
+<script>
+// filepath: pymsi/docs/msi_viewer.md (inline script)
+document.addEventListener('DOMContentLoaded', function () {
+  var fileInputContainer = document.querySelector('.file-input-container');
+  if (!fileInputContainer) return;
+
+  // Highlight on drag over
+  fileInputContainer.addEventListener('dragenter', function (e) {
+    e.preventDefault();
+    fileInputContainer.classList.add('dragover');
+  });
+  fileInputContainer.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    fileInputContainer.classList.add('dragover');
+  });
+  fileInputContainer.addEventListener('dragleave', function (e) {
+    if (e.relatedTarget && fileInputContainer.contains(e.relatedTarget)) return;
+    fileInputContainer.classList.remove('dragover');
+  });
+  fileInputContainer.addEventListener('drop', function (e) {
+    fileInputContainer.classList.remove('dragover');
+  });
+});
+</script>
 
 <!-- Include the Pyodide script -->
 <script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
