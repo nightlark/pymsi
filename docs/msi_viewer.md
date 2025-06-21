@@ -93,7 +93,9 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 
   .file-input-container {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    width: 100%;
+    max-width: 320px;
   }
 
   .file-input-container.dragover .file-input-label {
@@ -115,8 +117,9 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   }
 
   .file-input-label {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
     background: #007acc;
@@ -129,6 +132,11 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     box-shadow: none;
     position: relative;
     z-index: 1;
+    width: 100%;
+    min-width: 200px;
+    min-height: 44px;
+    text-align: center;
+    user-select: none;
   }
 
   .file-input-label:hover,
@@ -256,9 +264,10 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 // filepath: pymsi/docs/msi_viewer.md (inline script)
 document.addEventListener('DOMContentLoaded', function () {
   var fileInputContainer = document.querySelector('.file-input-container');
-  if (!fileInputContainer) return;
+  var fileInput = document.getElementById('msi-file-input');
+  if (!fileInputContainer || !fileInput) return;
 
-  // Highlight on drag over
+  // Make the label and container clickable and droppable everywhere
   fileInputContainer.addEventListener('dragenter', function (e) {
     e.preventDefault();
     fileInputContainer.classList.add('dragover');
@@ -272,7 +281,15 @@ document.addEventListener('DOMContentLoaded', function () {
     fileInputContainer.classList.remove('dragover');
   });
   fileInputContainer.addEventListener('drop', function (e) {
+    e.preventDefault();
     fileInputContainer.classList.remove('dragover');
+    // If files are dropped, set them on the input and trigger change
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      fileInput.files = e.dataTransfer.files;
+      // Trigger change event for compatibility
+      var event = new Event('change', { bubbles: true });
+      fileInput.dispatchEvent(event);
+    }
   });
 });
 </script>
