@@ -25,7 +25,7 @@ class Media:
         print(" " * (indent + 2) + f"Last Sequence: {self.last_sequence}")
         if self.disk_prompt:
             print(" " * (indent + 2) + f"Disk Prompt: {self.disk_prompt}")
-        if self.cabinet:
+        if self._cabinet:
             print(" " * (indent + 2) + f"Cabinet: {self._cabinet}")
         if self.volume_label:
             print(" " * (indent + 2) + f"Volume Label: {self.volume_label}")
