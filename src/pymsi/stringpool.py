@@ -21,9 +21,7 @@ class StringPool:
             length = pool_reader.read_u16_le()
             refcount = pool_reader.read_u16_le()
             if length == 0 and refcount > 0:
-                length = (refcount << 16) | pool_reader.read_u16_le()
-                refcount = pool_reader.read_u16_le()
-
+                length = pool_reader.read_u32_le()
             self.strings.append((self.codepage.decode(data_reader.read_bytes(length)), refcount))
 
     def __getitem__(self, stringref: int):
