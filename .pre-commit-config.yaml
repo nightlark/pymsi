@@ -1,7 +1,7 @@
 exclude: ^(.gitignore)
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.5
+    rev: v0.12.8
     hooks:
       # Run the linter
       - id: ruff
@@ -9,7 +9,7 @@ repos:
       # Run the formatter
       - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: mixed-line-ending
       - id: end-of-file-fixer
@@ -20,7 +20,7 @@ repos:
       - id: check-json
       #- id: pretty-format-json
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
         args: [-x]
