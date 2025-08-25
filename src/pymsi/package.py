@@ -1,5 +1,6 @@
 import copy
 import io
+import mmap
 from pathlib import Path
 from typing import Iterator, Optional, Union
 
@@ -18,13 +19,14 @@ from .summary import Summary
 
 
 class Package:
-    def __init__(self, path_or_bytesio: Union[Path, io.BytesIO]):
-        if isinstance(path_or_bytesio, io.BytesIO):
-            self.path = None
-            self.file = path_or_bytesio
-        else:
+    # TODO: consider typing.BinaryIO
+    def __init__(self, path_or_bytesio: Union[Path, io.BytesIO, mmap.mmap]):
+        if isinstance(path_or_bytesio, Path):
             self.path = path_or_bytesio.resolve(True)
             self.file = self.path.open("rb")
+        else:
+            self.path = None
+            self.file = path_or_bytesio
         self.tables = {}
         self.ole = None
         self.summary = None
