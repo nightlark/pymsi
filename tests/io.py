@@ -9,7 +9,7 @@ import pymsi
 def read_package(path_or_bytesio):
     with pymsi.Package(path_or_bytesio) as package:
         msi = pymsi.Msi(package)
-        msi.pretty_print()
+        return msi
 
 
 # Function to read a package using Path
@@ -38,9 +38,11 @@ def read_package_mmap(file_path):
 def test_read_package(read_package_func):
     test_file = "powertoys.msi"
 
-    read_package_func(test_file)
+    msi = read_package_func(test_file)
 
-    # TODO: add some test?
+    size = (msi.package.ole.nb_sect * msi.package.ole.sector_size) + 512
+
+    print(size)
 
 
 if __name__ == "__main__":
