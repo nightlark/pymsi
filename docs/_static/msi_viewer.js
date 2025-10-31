@@ -19,6 +19,7 @@ class MSIViewer {
     this.loadingIndicator = document.getElementById('loading-indicator');
     this.msiContent = document.getElementById('msi-content');
     this.currentFileDisplay = document.getElementById('current-file-display');
+    this.selectedFilesInfo = document.getElementById('selected-files-info');
     this.extractButton = document.getElementById('extract-button');
     this.filesList = document.getElementById('files-list');
     this.tableSelector = document.getElementById('table-selector');
@@ -104,8 +105,8 @@ class MSIViewer {
     }
   }
 
-  // Load MSI file from ArrayBuffer (used for file input, example, and URL)
-  async loadMsiFileFromArrayBuffer(arrayBuffer, fileName = 'uploaded.msi') {
+  // Load MSI file from ArrayBuffer with optional additional files (used for file input, example, and URL)
+  async loadMsiFileFromArrayBuffer(arrayBuffer, fileName = 'uploaded.msi', additionalFiles = []) {
     this.currentFileName = fileName;
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = 'Reading MSI file...';
@@ -114,10 +115,21 @@ class MSIViewer {
       // Read the file as an ArrayBuffer
       const msiBinaryData = new Uint8Array(arrayBuffer);
 
-      // Write the file to Pyodide's virtual file system
+      // Write the MSI file to Pyodide's virtual file system
       this.pyodide.FS.writeFile('/uploaded.msi', msiBinaryData);
 
+      // Write additional files (e.g., .cab files) to the same directory
+      if (additionalFiles && additionalFiles.length > 0) {
+        this.loadingIndicator.textContent = `Writing ${additionalFiles.length} additional file(s)...`;
+        for (const { data, name } of additionalFiles) {
+          const filePath = `/${name}`;
+          this.pyodide.FS.writeFile(filePath, new Uint8Array(data));
+          console.log(`Wrote additional file: ${filePath}`);
+        }
+      }
+
       // Create Package and Msi objects using the file path
+      this.loadingIndicator.textContent = 'Processing MSI file...';
       await this.pyodide.runPythonAsync(`
         from pathlib import Path
         current_package = pymsi.Package(Path('/uploaded.msi'))
@@ -148,6 +160,11 @@ class MSIViewer {
     } catch (error) {
       this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
       console.error('Error processing MSI:', error);
+      
+      // Show a more helpful error message if it's related to missing cab files
+      if (error.message && error.message.includes('External media file') && error.message.includes('not found')) {
+        this.loadingIndicator.innerHTML = `${this.loadingIndicator.textContent}<br><br><strong>Tip:</strong> This MSI file references external .cab files. Please select all files together (the .msi file and any .cab files in the same folder).`;
+      }
     }
   }
 
@@ -155,9 +172,41 @@ class MSIViewer {
   async handleFileSelect(event) {
     if (!this.fileInput.files || this.fileInput.files.length === 0) return;
 
-    const file = this.fileInput.files[0];
-    const arrayBuffer = await file.arrayBuffer();
-    await this.loadMsiFileFromArrayBuffer(arrayBuffer, file.name);
+    const files = Array.from(this.fileInput.files);
+    
+    // Find the MSI file
+    const msiFile = files.find(f => f.name.toLowerCase().endsWith('.msi'));
+    if (!msiFile) {
+      this.loadingIndicator.style.display = 'block';
+      this.loadingIndicator.textContent = 'Error: No .msi file selected. Please select an MSI file.';
+      return;
+    }
+
+    // Get any additional files (e.g., .cab files)
+    const additionalFiles = files.filter(f => f !== msiFile);
+    
+    // Show info about selected files
+    if (this.selectedFilesInfo) {
+      if (additionalFiles.length > 0) {
+        const fileList = additionalFiles.map(f => f.name).join(', ');
+        this.selectedFilesInfo.textContent = `Selected: ${msiFile.name} + ${additionalFiles.length} additional file(s): ${fileList}`;
+        this.selectedFilesInfo.style.display = 'block';
+      } else {
+        this.selectedFilesInfo.textContent = `Selected: ${msiFile.name}`;
+        this.selectedFilesInfo.style.display = 'block';
+      }
+    }
+
+    // Read all files
+    const msiArrayBuffer = await msiFile.arrayBuffer();
+    const additionalFilesData = await Promise.all(
+      additionalFiles.map(async (file) => ({
+        name: file.name,
+        data: await file.arrayBuffer()
+      }))
+    );
+
+    await this.loadMsiFileFromArrayBuffer(msiArrayBuffer, msiFile.name, additionalFilesData);
   }
 
   // Handle loading the example file from the server
