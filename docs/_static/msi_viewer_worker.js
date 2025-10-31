@@ -237,10 +237,13 @@ async function getStreamsData() {
 // Load table data for a specific table
 async function loadTableData(tableName) {
   try {
+    // Set the table name as a variable in Python scope to avoid code injection
+    pyodide.globals.set('selected_table_name', tableName);
+    
     const tableData = await pyodide.runPythonAsync(`
       result = {'columns': [], 'rows': []}
       try:
-        table = current_package.get('${tableName}')
+        table = current_package.get(selected_table_name)
         result['columns'] = [column.name for column in table.columns]
         result['rows'] = [row for row in table.rows]
       except Exception as e:
