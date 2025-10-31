@@ -151,12 +151,43 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 
   #loading-indicator {
     margin-top: 1rem;
-    padding: 0.5rem;
+    padding: 0.75rem 1rem;
     background: #e3f2fd;
     border: 1px solid #90caf9;
     border-radius: 4px;
     color: #1565c0;
     font-weight: 500;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  #loading-indicator::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    border: 2px solid #1565c0;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  #loading-indicator.error {
+    background: #ffebee;
+    border-color: #ef5350;
+    color: #c62828;
+  }
+
+  #loading-indicator.error::before {
+    display: none;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   #current-file-display {
@@ -293,9 +324,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-
-<!-- Include the Pyodide script -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
 
 <!-- Include JSZip script -->
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
