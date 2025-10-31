@@ -237,9 +237,10 @@ async function getStreamsData() {
 // Load table data for a specific table
 async function loadTableData(tableName) {
   try {
-    // Validate table name to contain only safe characters
-    // MSI table names should only contain alphanumeric characters, underscores, and dots
-    if (!/^[a-zA-Z0-9_.]+$/.test(tableName)) {
+    // Validate table name to prevent control characters and path traversal
+    // MSI table names can include alphanumeric, underscores, dots, spaces, and hyphens
+    // But should not include control characters, quotes, or path separators
+    if (/[\x00-\x1F\x7F'"`\\\/]/.test(tableName)) {
       throw new Error('Invalid table name: contains unsupported characters');
     }
     

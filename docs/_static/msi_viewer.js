@@ -371,9 +371,12 @@ class MSIViewer {
         document.body.appendChild(a);
         a.click();
 
-        // Clean up immediately
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Clean up after allowing the download to start
+        // Use requestAnimationFrame to ensure the click event completes
+        requestAnimationFrame(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
 
         this.loadingIndicator.style.display = 'none';
       }).catch((error) => {
