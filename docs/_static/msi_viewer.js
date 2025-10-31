@@ -78,7 +78,9 @@ class MSIViewer {
     this.loadingIndicator.classList.remove('error');
 
     try {
-      // Create worker
+      // Create worker - path is relative to the HTML page location
+      // This works correctly on ReadTheDocs where the HTML is at /en/latest/msi_viewer.html
+      // and the worker is at /en/latest/_static/msi_viewer_worker.js
       this.worker = new Worker('_static/msi_viewer_worker.js');
 
       // Handle messages from the worker
@@ -360,11 +362,9 @@ class MSIViewer {
         document.body.appendChild(a);
         a.click();
 
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 0);
+        // Clean up immediately
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
         this.loadingIndicator.style.display = 'none';
       }).catch((error) => {
@@ -382,10 +382,23 @@ class MSIViewer {
     if (!this.isWorkerReady) {
       this.loadingIndicator.style.display = 'block';
       this.loadingIndicator.textContent = 'Waiting for worker to initialize...';
-      // Wait for worker to be ready
-      setTimeout(() => this.loadMsiFileFromArrayBuffer(arrayBuffer, fileName), 500);
+      // Wait for worker to be ready with exponential backoff
+      const maxRetries = 10;
+      if (!this._loadRetries) this._loadRetries = 0;
+      if (this._loadRetries < maxRetries) {
+        this._loadRetries++;
+        const delay = Math.min(500 * Math.pow(1.5, this._loadRetries - 1), 5000);
+        setTimeout(() => this.loadMsiFileFromArrayBuffer(arrayBuffer, fileName), delay);
+      } else {
+        this.loadingIndicator.classList.add('error');
+        this.loadingIndicator.textContent = 'Worker initialization timeout. Please refresh the page.';
+        this._loadRetries = 0;
+      }
       return;
     }
+
+    // Reset retry counter on success
+    this._loadRetries = 0;
 
     // Send the file to the worker for processing
     this.worker.postMessage({

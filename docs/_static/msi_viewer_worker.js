@@ -102,8 +102,6 @@ async function loadMsiFile(arrayBuffer, fileName) {
     currentMsi = await pyodide.globals.get('current_msi');
 
     sendProgress('Loading file information...');
-
-    // Load all the data
     const filesData = await getFilesData();
     const tablesData = await getTablesData();
     const summaryData = await getSummaryData();
