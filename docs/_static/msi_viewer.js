@@ -1,4 +1,15 @@
 // MSI Viewer JavaScript Implementation
+//
+// This application uses Web Workers to handle MSI processing in a background thread,
+// preventing the main UI thread from blocking during long operations like:
+// - Loading and initializing Pyodide
+// - Parsing large MSI files
+// - Extracting files with LZX compression
+//
+// Architecture:
+// - Main thread: Handles UI updates, user interactions, and rendering
+// - Worker thread: Handles Pyodide and all MSI processing operations
+// - Communication: postMessage API for bidirectional messaging
 
 // Main class for the MSI Viewer application
 class MSIViewer {

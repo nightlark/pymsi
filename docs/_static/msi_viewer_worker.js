@@ -1,4 +1,18 @@
 // MSI Viewer Web Worker - Handles Pyodide operations in a separate thread
+//
+// This web worker runs Pyodide (Python runtime) in a background thread to prevent
+// blocking the main UI thread. This is especially important for:
+// - Large MSI files that take time to parse
+// - MSI files using LZX compression which requires significant CPU
+// - File extraction operations that can take several seconds
+//
+// The worker communicates with the main thread via postMessage, sending:
+// - Progress updates during long operations
+// - Error messages if something goes wrong
+// - Processed data (files, tables, summary info) back to the main thread
+//
+// This architecture ensures the browser UI remains responsive and prevents
+// "page unresponsive" warnings during MSI processing.
 
 let pyodide = null;
 let pymsi = null;
