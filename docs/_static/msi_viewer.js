@@ -160,7 +160,7 @@ class MSIViewer {
     } catch (error) {
       this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
       console.error('Error processing MSI:', error);
-      
+
       // Show a more helpful error message if it's related to missing cab files
       if (error.message && error.message.includes('External media file') && error.message.includes('not found')) {
         this.loadingIndicator.innerHTML = `${this.loadingIndicator.textContent}<br><br><strong>Tip:</strong> This MSI file references external .cab files. Please select all files together (the .msi file and any .cab files in the same folder).`;
@@ -173,7 +173,7 @@ class MSIViewer {
     if (!this.fileInput.files || this.fileInput.files.length === 0) return;
 
     const files = Array.from(this.fileInput.files);
-    
+
     // Find the MSI file
     const msiFile = files.find(f => f.name.toLowerCase().endsWith('.msi'));
     if (!msiFile) {
@@ -184,7 +184,7 @@ class MSIViewer {
 
     // Get any additional files (e.g., .cab files)
     const additionalFiles = files.filter(f => f !== msiFile);
-    
+
     // Show info about selected files
     if (this.selectedFilesInfo) {
       if (additionalFiles.length > 0) {
