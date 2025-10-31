@@ -3,14 +3,13 @@
 // Main class for the MSI Viewer application
 class MSIViewer {
   constructor() {
-    this.pyodide = null;
-    this.pymsi = null;
-    this.currentPackage = null;
-    this.currentMsi = null;
+    this.worker = null;
     this.currentFileName = null;
+    this.tablesData = [];
+    this.isWorkerReady = false;
     this.initElements();
     this.initEventListeners();
-    this.loadPyodide();
+    this.initWorker();
   }
 
   // Initialize DOM element references
@@ -61,94 +60,316 @@ class MSIViewer {
     });
   }
 
-  // Load Pyodide and pymsi
-  async loadPyodide() {
+  // Initialize the web worker
+  initWorker() {
     this.loadingIndicator.style.display = 'block';
-    this.loadingIndicator.textContent = 'Loading Pyodide...';
+    this.loadingIndicator.textContent = 'Initializing...';
 
     try {
-      // Pyodide should already be loaded from the script in the HTML
-      if (typeof loadPyodide === 'undefined') {
-        throw new Error('Pyodide is not loaded. Please check your internet connection.');
-      }
+      // Create worker
+      this.worker = new Worker('_static/msi_viewer_worker.js');
 
-      this.pyodide = await loadPyodide();
-      if (!this.pyodide) {
-        throw new Error('loadPyodide() failed.');
-      }
+      // Handle messages from the worker
+      this.worker.addEventListener('message', (event) => {
+        this.handleWorkerMessage(event.data);
+      });
 
-      this.loadingIndicator.textContent = 'Loading pymsi...';
+      // Handle worker errors
+      this.worker.addEventListener('error', (error) => {
+        console.error('Worker error:', error);
+        this.loadingIndicator.textContent = `Worker error: ${error.message}`;
+      });
 
-      // Install pymsi using micropip
-      await this.pyodide.loadPackagesFromImports('import micropip');
-      const micropip = this.pyodide.pyimport('micropip');
-      // The name of the package is 'python-msi' on PyPI
-      await micropip.install('python-msi');
-
-      // Import pymsi
-      await this.pyodide.runPythonAsync(`
-        import pymsi
-        import json
-        import io
-        import zipfile
-        from js import Uint8Array, Object, File, Blob, URL
-        from pyodide.ffi import to_js
-      `);
-
-      this.pymsi = this.pyodide.pyimport('pymsi');
-      this.loadingIndicator.style.display = 'none';
-      console.log('pymsi loaded successfully');
+      // Initialize Pyodide in the worker
+      this.worker.postMessage({ type: 'init' });
     } catch (error) {
-      this.loadingIndicator.textContent = `Error loading Pyodide or pymsi: ${error.message}`;
-      console.error('Error initializing:', error);
+      console.error('Error creating worker:', error);
+      this.loadingIndicator.textContent = `Error creating worker: ${error.message}`;
+    }
+  }
+
+  // Handle messages from the worker
+  handleWorkerMessage(message) {
+    const { type, success, error, data, message: progressMsg, isError } = message;
+
+    switch (type) {
+      case 'progress':
+        this.loadingIndicator.style.display = 'block';
+        this.loadingIndicator.textContent = progressMsg;
+        if (isError) {
+          console.error('Worker progress error:', progressMsg);
+        }
+        break;
+
+      case 'initialized':
+        if (success) {
+          this.isWorkerReady = true;
+          this.loadingIndicator.style.display = 'none';
+          console.log('Worker initialized successfully');
+        } else {
+          this.loadingIndicator.textContent = `Initialization error: ${error}`;
+          console.error('Worker initialization failed:', error);
+        }
+        break;
+
+      case 'msi-loaded':
+        if (success) {
+          this.displayMsiData(data, message.fileName);
+        } else {
+          this.loadingIndicator.textContent = `Error loading MSI: ${error}`;
+          console.error('MSI loading failed:', error);
+        }
+        break;
+
+      case 'table-data':
+        if (success) {
+          this.displayTableData(data);
+        } else {
+          this.loadingIndicator.textContent = `Error loading table: ${error}`;
+          console.error('Table loading failed:', error);
+        }
+        break;
+
+      case 'extract-complete':
+        if (success) {
+          this.createZipFromExtractedFiles(message.files, message.baseFileName);
+        } else {
+          this.loadingIndicator.textContent = `Extraction error: ${error}`;
+          console.error('Extraction failed:', error);
+        }
+        break;
+
+      default:
+        console.warn('Unknown message type from worker:', type);
+    }
+  }
+
+  // Display MSI data after loading
+  displayMsiData(data, fileName) {
+    this.currentFileName = fileName;
+    this.tablesData = data.tables;
+
+    // Display files
+    this.displayFilesList(data.files);
+
+    // Display tables list
+    this.displayTablesList(data.tables);
+
+    // Display summary
+    this.displaySummary(data.summary);
+
+    // Display streams
+    this.displayStreams(data.streams);
+
+    // Enable the extract button and show current file
+    this.extractButton.disabled = false;
+    this.currentFileDisplay.textContent = `Currently loaded: ${this.currentFileName}`;
+    this.currentFileDisplay.style.display = 'block';
+
+    this.loadingIndicator.style.display = 'none';
+  }
+
+  // Display files list
+  displayFilesList(filesData) {
+    this.filesList.innerHTML = '';
+
+    if (filesData.length === 0) {
+      this.filesList.innerHTML = '<tr><td colspan="5">No files found</td></tr>';
+      return;
+    }
+
+    for (const file of filesData) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${file.name}</td>
+        <td>${file.directory}</td>
+        <td>${file.size}</td>
+        <td>${file.component}</td>
+        <td>${file.version}</td>
+      `;
+      this.filesList.appendChild(row);
+    }
+  }
+
+  // Display tables list
+  displayTablesList(tables) {
+    this.tableSelector.innerHTML = '';
+
+    if (tables.length === 0) {
+      this.tableSelector.innerHTML = '<option>No tables found</option>';
+      return;
+    }
+
+    tables.forEach(table => {
+      const option = document.createElement('option');
+      option.value = table;
+      option.textContent = table;
+      this.tableSelector.appendChild(option);
+    });
+
+    // Load the first table by default
+    if (tables.length > 0) {
+      this.loadTableData();
+    }
+  }
+
+  // Display summary information
+  displaySummary(summaryData) {
+    this.summaryContent.innerHTML = '';
+
+    if (Object.keys(summaryData).length === 0) {
+      this.summaryContent.innerHTML = '<p>No summary information available</p>';
+      return;
+    }
+
+    const table = document.createElement('table');
+
+    for (const [key, value] of Object.entries(summaryData)) {
+      const row = document.createElement('tr');
+      const keyCell = document.createElement('td');
+      const valueCell = document.createElement('td');
+
+      keyCell.textContent = key;
+      valueCell.textContent = value !== null ? String(value) : '';
+
+      row.appendChild(keyCell);
+      row.appendChild(valueCell);
+      table.appendChild(row);
+    }
+
+    this.summaryContent.appendChild(table);
+  }
+
+  // Display streams
+  displayStreams(streams) {
+    this.streamsContent.innerHTML = '';
+
+    if (streams.length === 0) {
+      this.streamsContent.innerHTML = '<p>No streams available</p>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    const headerRow = document.createElement('tr');
+    headerRow.innerHTML = '<th>Name</th>';
+    table.appendChild(headerRow);
+
+    for (const stream of streams) {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${stream}</td>`;
+      table.appendChild(row);
+    }
+
+    this.streamsContent.appendChild(table);
+  }
+
+  // Display table data
+  displayTableData(data) {
+    // Display table columns
+    this.tableHeader.innerHTML = '';
+    const headerRow = document.createElement('tr');
+
+    for (const column of data.columns) {
+      const th = document.createElement('th');
+      th.textContent = column;
+      headerRow.appendChild(th);
+    }
+
+    this.tableHeader.appendChild(headerRow);
+
+    // Display table rows
+    this.tableContent.innerHTML = '';
+
+    if (data.rows.length === 0) {
+      const emptyRow = document.createElement('tr');
+      emptyRow.innerHTML = `<td colspan="${data.columns.length}">No data</td>`;
+      this.tableContent.appendChild(emptyRow);
+      return;
+    }
+
+    for (const rowData of data.rows) {
+      const row = document.createElement('tr');
+
+      // Iterate through columns to maintain the correct order
+      for (const column of data.columns) {
+        const td = document.createElement('td');
+        const value = rowData[column];
+        td.textContent = value !== null && value !== undefined ? String(value) : '';
+        row.appendChild(td);
+      }
+
+      this.tableContent.appendChild(row);
+    }
+
+    this.loadingIndicator.style.display = 'none';
+  }
+
+  // Create ZIP from extracted files
+  createZipFromExtractedFiles(files, baseFileName) {
+    this.loadingIndicator.style.display = 'block';
+    this.loadingIndicator.textContent = 'Creating ZIP archive...';
+
+    try {
+      // Make sure JSZip is loaded
+      if (typeof JSZip === 'undefined') {
+        throw new Error('JSZip failed to load.');
+      }
+
+      const zip = new JSZip();
+
+      // Add each file to the ZIP
+      for (const file of files) {
+        zip.file(file.path, file.data);
+      }
+
+      // Generate ZIP blob
+      zip.generateAsync({ type: 'blob' }).then((zipBlob) => {
+        // Create filename
+        const zipFileName = `${baseFileName}_extracted.zip`;
+
+        // Trigger download
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = zipFileName;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 0);
+
+        this.loadingIndicator.style.display = 'none';
+      }).catch((error) => {
+        this.loadingIndicator.textContent = `Error creating ZIP: ${error.message}`;
+        console.error('Error creating ZIP:', error);
+      });
+    } catch (error) {
+      this.loadingIndicator.textContent = `Error creating ZIP: ${error.message}`;
+      console.error('Error creating ZIP:', error);
     }
   }
 
   // Load MSI file from ArrayBuffer (used for file input, example, and URL)
   async loadMsiFileFromArrayBuffer(arrayBuffer, fileName = 'uploaded.msi') {
-    this.currentFileName = fileName;
-    this.loadingIndicator.style.display = 'block';
-    this.loadingIndicator.textContent = 'Reading MSI file...';
-
-    try {
-      // Read the file as an ArrayBuffer
-      const msiBinaryData = new Uint8Array(arrayBuffer);
-
-      // Write the file to Pyodide's virtual file system
-      this.pyodide.FS.writeFile('/uploaded.msi', msiBinaryData);
-
-      // Create Package and Msi objects using the file path
-      await this.pyodide.runPythonAsync(`
-        from pathlib import Path
-        current_package = pymsi.Package(Path('/uploaded.msi'))
-        current_msi = pymsi.Msi(current_package, True)
-      `);
-
-      this.currentPackage = await this.pyodide.globals.get('current_package');
-      this.currentMsi = await this.pyodide.globals.get('current_msi');
-      console.log('Successfully created MSI object:', this.currentMsi);
-      console.log('Successfully created Package object:', this.currentPackage);
-
-      // Load and display the MSI contents
-      await this.loadFilesList();
-      console.log('Files list loaded successfully');
-      await this.loadTablesList();
-      console.log('Tables list loaded successfully');
-      await this.loadSummaryInfo();
-      console.log('Summary information loaded successfully');
-      await this.loadStreams();
-      console.log('Streams loaded successfully');
-
-      // Enable the extract button and show current file
-      this.extractButton.disabled = false;
-      this.currentFileDisplay.textContent = `Currently loaded: ${this.currentFileName}`;
-      this.currentFileDisplay.style.display = 'block';
-
-      this.loadingIndicator.style.display = 'none';
-    } catch (error) {
-      this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
-      console.error('Error processing MSI:', error);
+    if (!this.isWorkerReady) {
+      this.loadingIndicator.style.display = 'block';
+      this.loadingIndicator.textContent = 'Waiting for worker to initialize...';
+      // Wait for worker to be ready
+      setTimeout(() => this.loadMsiFileFromArrayBuffer(arrayBuffer, fileName), 500);
+      return;
     }
+
+    // Send the file to the worker for processing
+    this.worker.postMessage({
+      type: 'load-msi',
+      data: {
+        arrayBuffer: arrayBuffer,
+        fileName: fileName
+      }
+    });
   }
 
   // Handle file selection
@@ -176,303 +397,37 @@ class MSIViewer {
     }
   }
 
-  // Load files list from MSI
-  async loadFilesList() {
-    const filesData = await this.pyodide.runPythonAsync(`
-      files = []
-      try:
-        for file in current_msi.files.values():
-          files.append({
-            'name': file.name,
-            'directory': file.component.directory.name,
-            'size': file.size,
-            'component': file.component.id,
-            'version': file.version
-          })
-      except Exception as e:
-        print(f"Error getting files: {e}")
-        files = []
-      to_js(files)
-    `);
-    console.log('Files data loaded:', filesData);
-
-    this.filesList.innerHTML = '';
-
-    if (filesData.length === 0) {
-      this.filesList.innerHTML = '<tr><td colspan="5">No files found</td></tr>';
-      return;
-    }
-
-    for (const file of filesData) {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${file.get("name") || ''}</td>
-        <td>${file.get("directory") || ''}</td>
-        <td>${file.get("size") || ''}</td>
-        <td>${file.get("component") || ''}</td>
-        <td>${file.get("version") || ''}</td>
-      `;
-      this.filesList.appendChild(row);
-    }
-  }
-
-  // Load tables list
-  async loadTablesList() {
-    const tables = await this.pyodide.runPythonAsync(`
-      tables = []
-      for k in current_package.ole.root.kids:
-        name, is_table = pymsi.streamname.decode_unicode(k.name)
-        if is_table:
-          tables.append(name)
-      to_js(tables)
-    `);
-    console.log('Tables found:', tables);
-
-    this.tableSelector.innerHTML = '';
-
-    if (tables.length === 0) {
-      this.tableSelector.innerHTML = '<option>No tables found</option>';
-      return;
-    }
-
-    tables.forEach(table => {
-      const option = document.createElement('option');
-      option.value = table;
-      option.textContent = table;
-      this.tableSelector.appendChild(option);
-    });
-
-    // Load the first table by default
-    if (tables.length > 0) {
-      this.loadTableData();
-    }
-  }
-
   // Load table data when a table is selected
-  async loadTableData() {
+  loadTableData() {
     const selectedTable = this.tableSelector.value;
-    if (!selectedTable) return;
+    if (!selectedTable || !this.isWorkerReady) return;
 
-    const tableData = await this.pyodide.runPythonAsync(`
-      result = {'columns': [], 'rows': []}
-      try:
-        table = current_package.get('${selectedTable}')
-        result['columns'] = [column.name for column in table.columns]
-        result['rows'] = [row for row in table.rows]
-      except Exception as e:
-        print(f"Error getting table data: {e}")
-      to_js(result)
-    `);
-    console.log('Table data loaded:', tableData);
+    this.loadingIndicator.style.display = 'block';
+    this.loadingIndicator.textContent = 'Loading table data...';
 
-    // Display table columns
-    this.tableHeader.innerHTML = '';
-    const headerRow = document.createElement('tr');
-
-    for (const column of tableData.get("columns")) {
-      const th = document.createElement('th');
-      th.textContent = column;
-      headerRow.appendChild(th);
-    }
-
-    this.tableHeader.appendChild(headerRow);
-
-    // Display table rows
-    this.tableContent.innerHTML = '';
-
-    if (tableData.get("rows").length === 0) {
-      const emptyRow = document.createElement('tr');
-      emptyRow.innerHTML = `<td colspan="${tableData.get("columns").length}">No data</td>`;
-      this.tableContent.appendChild(emptyRow);
-      return;
-    }
-
-    for (const rowData of tableData.get("rows")) {
-      const row = document.createElement('tr');
-
-      // Iterate through columns to maintain the correct order
-      for (const column of tableData.get("columns")) {
-        const td = document.createElement('td');
-        const value = rowData.get(column);
-        td.textContent = (value !== null && value !== undefined) ? String(value) : '';
-        row.appendChild(td);
+    // Request table data from worker
+    this.worker.postMessage({
+      type: 'load-table',
+      data: {
+        tableName: selectedTable
       }
-
-      this.tableContent.appendChild(row);
-    }
-  }
-
-  // Load summary information
-  async loadSummaryInfo() {
-    const summaryData = await this.pyodide.runPythonAsync(`
-      result = {}
-      summary = current_package.summary
-
-      # Helper function to safely convert values to string
-      def safe_str(value):
-        return "" if value is None else str(value)
-
-      # Add each property if it exists
-      result["arch"] = safe_str(summary.arch())
-      result["author"] = safe_str(summary.author())
-      result["comments"] = safe_str(summary.comments())
-      result["creating_application"] = safe_str(summary.creating_application())
-      result["creation_time"] = safe_str(summary.creation_time())
-      result["languages"] = safe_str(summary.languages())
-      result["subject"] = safe_str(summary.subject())
-      result["title"] = safe_str(summary.title())
-      result["uuid"] = safe_str(summary.uuid())
-      result["word_count"] = safe_str(summary.word_count())
-
-      to_js(result)
-    `);
-    console.log('Summary data loaded:', summaryData);
-
-    this.summaryContent.innerHTML = '';
-
-    if (summaryData.size === 0) {
-      this.summaryContent.innerHTML = '<p>No summary information available</p>';
-      return;
-    }
-
-    const table = document.createElement('table');
-
-    for (const [key, value] of summaryData) {
-      const row = document.createElement('tr');
-      const keyCell = document.createElement('td');
-      const valueCell = document.createElement('td');
-
-      keyCell.textContent = key;
-      valueCell.textContent = value !== null ? String(value) : '';
-
-      row.appendChild(keyCell);
-      row.appendChild(valueCell);
-      table.appendChild(row);
-    }
-
-    this.summaryContent.appendChild(table);
-  }
-
-  // Load streams information
-  async loadStreams() {
-    const streamsData = await this.pyodide.runPythonAsync(`
-      streams = []
-      for k in current_package.ole.root.kids:
-        name, is_table = pymsi.streamname.decode_unicode(k.name)
-        if not is_table:
-          streams.append(name)
-      to_js(streams)
-    `);
-    console.log('Streams data loaded:', streamsData);
-
-    this.streamsContent.innerHTML = '';
-
-    if (streamsData.length === 0) {
-      this.streamsContent.innerHTML = '<p>No streams available</p>';
-      return;
-    }
-
-    const table = document.createElement('table');
-    const headerRow = document.createElement('tr');
-    headerRow.innerHTML = '<th>Name</th>';
-    table.appendChild(headerRow);
-
-    for (const stream of streamsData) {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${stream}</td>
-      `;
-      table.appendChild(row);
-    }
-
-    this.streamsContent.appendChild(table);
+    });
   }
 
   // Extract files and create a ZIP for download
-  async extractFiles() {
+  extractFiles() {
+    if (!this.isWorkerReady || !this.currentFileName) return;
+
     this.loadingIndicator.style.display = 'block';
-    this.loadingIndicator.textContent = 'Extracting files...';
+    this.loadingIndicator.textContent = 'Starting extraction...';
 
-    try {
-      // Import and use the extract_root function from __main__.py
-      await this.pyodide.runPythonAsync(`
-        import shutil
-        from pathlib import Path
-        from pymsi.__main__ import extract_root
-
-        # Clean up and recreate temp directory
-        temp_dir = Path('/tmp/extracted')
-        if temp_dir.exists():
-            shutil.rmtree(temp_dir)
-        temp_dir.mkdir(parents=True, exist_ok=True)
-
-        # Extract files using the same logic as the CLI
-        extract_root(current_msi.root, temp_dir)
-      `);
-
-      this.loadingIndicator.textContent = 'Creating ZIP archive...';
-
-      // Get list of all extracted files
-      const fileList = await this.pyodide.runPythonAsync(`
-        import os
-        files = []
-        temp_dir = Path('/tmp/extracted')
-        for root, dirs, filenames in os.walk(temp_dir):
-            for filename in filenames:
-                full_path = os.path.join(root, filename)
-                rel_path = os.path.relpath(full_path, temp_dir)
-                files.append(rel_path)
-        to_js(files)
-      `);
-
-      if (fileList.length === 0) {
-        this.loadingIndicator.textContent = 'No files extracted';
-        setTimeout(() => {
-          this.loadingIndicator.style.display = 'none';
-        }, 2000);
-        return;
+    // Request file extraction from worker
+    this.worker.postMessage({
+      type: 'extract-files',
+      data: {
+        fileName: this.currentFileName
       }
-
-      // Create ZIP file in JavaScript using JSZip library
-      // We need to make sure JSZip is loaded
-      if (typeof JSZip === 'undefined') {
-        throw new Error('JSZip failed to load.');
-      }
-
-      const zip = new JSZip();
-
-      // Add each file to the ZIP
-      for (const filePath of fileList) {
-        const fileData = this.pyodide.FS.readFile(`/tmp/extracted/${filePath}`);
-        zip.file(filePath, fileData);
-      }
-
-      // Generate ZIP blob
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-      // Create filename based on MSI name
-      const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
-      const zipFileName = `${baseFileName}_extracted.zip`;
-
-      // Trigger download
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = zipFileName;
-      document.body.appendChild(a);
-      a.click();
-
-      // Clean up
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 0);
-
-      this.loadingIndicator.style.display = 'none';
-    } catch (error) {
-      this.loadingIndicator.textContent = `Error extracting files: ${error.message}`;
-      console.error('Error extracting files:', error);
-    }
+    });
   }
 }
 
