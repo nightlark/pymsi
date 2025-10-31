@@ -14,10 +14,18 @@
 // Main class for the MSI Viewer application
 class MSIViewer {
   constructor() {
+    // Configuration constants
+    this.WORKER_PATH = '_static/msi_viewer_worker.js';
+    this.WORKER_INIT_MAX_RETRIES = 10;
+    this.WORKER_INIT_BASE_DELAY = 500;
+    this.WORKER_INIT_MAX_DELAY = 5000;
+    this.WORKER_INIT_BACKOFF_FACTOR = 1.5;
+    
     this.worker = null;
     this.currentFileName = null;
     this.tablesData = [];
     this.isWorkerReady = false;
+    this._loadRetries = 0;
     this.initElements();
     this.initEventListeners();
     this.initWorker();
@@ -81,7 +89,7 @@ class MSIViewer {
       // Create worker - path is relative to the HTML page location
       // This works correctly on ReadTheDocs where the HTML is at /en/latest/msi_viewer.html
       // and the worker is at /en/latest/_static/msi_viewer_worker.js
-      this.worker = new Worker('_static/msi_viewer_worker.js');
+      this.worker = new Worker(this.WORKER_PATH);
 
       // Handle messages from the worker
       this.worker.addEventListener('message', (event) => {
@@ -383,11 +391,12 @@ class MSIViewer {
       this.loadingIndicator.style.display = 'block';
       this.loadingIndicator.textContent = 'Waiting for worker to initialize...';
       // Wait for worker to be ready with exponential backoff
-      const maxRetries = 10;
-      if (!this._loadRetries) this._loadRetries = 0;
-      if (this._loadRetries < maxRetries) {
+      if (this._loadRetries < this.WORKER_INIT_MAX_RETRIES) {
         this._loadRetries++;
-        const delay = Math.min(500 * Math.pow(1.5, this._loadRetries - 1), 5000);
+        const delay = Math.min(
+          this.WORKER_INIT_BASE_DELAY * Math.pow(this.WORKER_INIT_BACKOFF_FACTOR, this._loadRetries - 1),
+          this.WORKER_INIT_MAX_DELAY
+        );
         setTimeout(() => this.loadMsiFileFromArrayBuffer(arrayBuffer, fileName), delay);
       } else {
         this.loadingIndicator.classList.add('error');
