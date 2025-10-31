@@ -163,7 +163,17 @@ class MSIViewer {
 
       // Show a more helpful error message if it's related to missing cab files
       if (error.message && error.message.includes('External media file') && error.message.includes('not found')) {
-        this.loadingIndicator.innerHTML = `${this.loadingIndicator.textContent}<br><br><strong>Tip:</strong> This MSI file references external .cab files. Please select all files together (the .msi file and any .cab files in the same folder).`;
+        // Clear and rebuild the loading indicator content safely
+        this.loadingIndicator.textContent = '';
+        const errorText = document.createTextNode(`Error processing MSI file: ${error.message}`);
+        this.loadingIndicator.appendChild(errorText);
+        this.loadingIndicator.appendChild(document.createElement('br'));
+        this.loadingIndicator.appendChild(document.createElement('br'));
+        const tipStrong = document.createElement('strong');
+        tipStrong.textContent = 'Tip:';
+        this.loadingIndicator.appendChild(tipStrong);
+        const tipText = document.createTextNode(' This MSI file references external .cab files. Please select all files together (the .msi file and any .cab files in the same folder).');
+        this.loadingIndicator.appendChild(tipText);
       }
     }
   }
@@ -184,6 +194,16 @@ class MSIViewer {
 
     // Get any additional files (e.g., .cab files)
     const additionalFiles = files.filter(f => f !== msiFile);
+
+    // Check file sizes (warn if total > 500MB)
+    const maxTotalSize = 500 * 1024 * 1024; // 500MB
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    if (totalSize > maxTotalSize) {
+      this.loadingIndicator.style.display = 'block';
+      this.loadingIndicator.textContent = `Warning: Total file size (${Math.round(totalSize / 1024 / 1024)}MB) exceeds recommended limit (${Math.round(maxTotalSize / 1024 / 1024)}MB). Loading may be slow or fail.`;
+      // Allow the user to proceed anyway
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
 
     // Show info about selected files
     if (this.selectedFilesInfo) {
