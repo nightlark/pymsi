@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSI Viewer Test</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #loading-indicator {
+            padding: 10px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .file-selector {
+            text-align: center;
+            padding: 2rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #current-file-display {
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background: #f0f8ff;
+            border: 1px solid #b0d4f1;
+            border-radius: 4px;
+            display: none;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-button {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            padding: 0.5rem 1rem;
+            margin-right: 0.25rem;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+        }
+        .tab-pane {
+            display: none;
+            padding: 1rem;
+            border: 1px solid #ddd;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        #extract-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>MSI Viewer Test</h1>
+    
+    <div id="msi-viewer-app">
+        <div class="file-selector">
+            <div style="margin-bottom: 1rem;">
+                <button id="load-example-file-button" type="button">Load example file</button>
+            </div>
+            <div>
+                <input type="file" id="msi-file-input" accept=".msi" />
+            </div>
+            <div id="loading-indicator" style="display: none;">Loading...</div>
+        </div>
+
+        <div id="msi-content">
+            <div id="current-file-display" style="display: none;"></div>
+            <div class="tabs">
+                <button class="tab-button active" data-tab="files">Files</button>
+                <button class="tab-button" data-tab="tables">Tables</button>
+                <button class="tab-button" data-tab="summary">Summary</button>
+                <button class="tab-button" data-tab="streams">Streams</button>
+            </div>
+            <div class="tab-content">
+                <div id="files-tab" class="tab-pane active">
+                    <h3>Files</h3>
+                    <button id="extract-button" disabled>Extract All Files (ZIP)</button>
+                    <div id="files-list-container">
+                        <table id="files-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Directory</th>
+                                    <th>Size</th>
+                                    <th>Component</th>
+                                    <th>Version</th>
+                                </tr>
+                            </thead>
+                            <tbody id="files-list">
+                                <tr><td colspan="5">Select an MSI file to view its contents</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="tables-tab" class="tab-pane">
+                    <h3>Tables</h3>
+                    <select id="table-selector"><option>Select an MSI file first</option></select>
+                    <div id="table-viewer-container">
+                        <table id="table-viewer">
+                            <thead id="table-header"></thead>
+                            <tbody id="table-content">
+                                <tr><td>Select an MSI file to view table data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="summary-tab" class="tab-pane">
+                    <h3>Summary Information</h3>
+                    <div id="summary-content">
+                        <p>Select an MSI file to view summary information</p>
+                    </div>
+                </div>
+                <div id="streams-tab" class="tab-pane">
+                    <h3>Streams</h3>
+                    <div id="streams-content">
+                        <p>Select an MSI file to view streams</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include JSZip script -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Include the MSI viewer script -->
+    <script type="text/javascript" src="_static/msi_viewer.js"></script>
+</body>
+</html>

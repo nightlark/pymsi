@@ -64,6 +64,7 @@ class MSIViewer {
   initWorker() {
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = 'Initializing...';
+    this.loadingIndicator.classList.remove('error');
 
     try {
       // Create worker
@@ -77,6 +78,7 @@ class MSIViewer {
       // Handle worker errors
       this.worker.addEventListener('error', (error) => {
         console.error('Worker error:', error);
+        this.loadingIndicator.classList.add('error');
         this.loadingIndicator.textContent = `Worker error: ${error.message}`;
       });
 
@@ -84,6 +86,7 @@ class MSIViewer {
       this.worker.postMessage({ type: 'init' });
     } catch (error) {
       console.error('Error creating worker:', error);
+      this.loadingIndicator.classList.add('error');
       this.loadingIndicator.textContent = `Error creating worker: ${error.message}`;
     }
   }
@@ -97,7 +100,10 @@ class MSIViewer {
         this.loadingIndicator.style.display = 'block';
         this.loadingIndicator.textContent = progressMsg;
         if (isError) {
+          this.loadingIndicator.classList.add('error');
           console.error('Worker progress error:', progressMsg);
+        } else {
+          this.loadingIndicator.classList.remove('error');
         }
         break;
 
@@ -105,35 +111,43 @@ class MSIViewer {
         if (success) {
           this.isWorkerReady = true;
           this.loadingIndicator.style.display = 'none';
+          this.loadingIndicator.classList.remove('error');
           console.log('Worker initialized successfully');
         } else {
+          this.loadingIndicator.classList.add('error');
           this.loadingIndicator.textContent = `Initialization error: ${error}`;
           console.error('Worker initialization failed:', error);
         }
         break;
 
       case 'msi-loaded':
+        this.loadingIndicator.classList.remove('error');
         if (success) {
           this.displayMsiData(data, message.fileName);
         } else {
+          this.loadingIndicator.classList.add('error');
           this.loadingIndicator.textContent = `Error loading MSI: ${error}`;
           console.error('MSI loading failed:', error);
         }
         break;
 
       case 'table-data':
+        this.loadingIndicator.classList.remove('error');
         if (success) {
           this.displayTableData(data);
         } else {
+          this.loadingIndicator.classList.add('error');
           this.loadingIndicator.textContent = `Error loading table: ${error}`;
           console.error('Table loading failed:', error);
         }
         break;
 
       case 'extract-complete':
+        this.loadingIndicator.classList.remove('error');
         if (success) {
           this.createZipFromExtractedFiles(message.files, message.baseFileName);
         } else {
+          this.loadingIndicator.classList.add('error');
           this.loadingIndicator.textContent = `Extraction error: ${error}`;
           console.error('Extraction failed:', error);
         }

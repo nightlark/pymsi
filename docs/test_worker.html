@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Worker Test</title>
+</head>
+<body>
+    <h1>Web Worker Test</h1>
+    <div id="status">Initializing...</div>
+    <div id="messages"></div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+
+        function addMessage(msg) {
+            const p = document.createElement('p');
+            p.textContent = new Date().toLocaleTimeString() + ': ' + msg;
+            messagesDiv.appendChild(p);
+        }
+
+        try {
+            addMessage('Creating worker...');
+            const worker = new Worker('_static/msi_viewer_worker.js');
+
+            worker.addEventListener('message', (event) => {
+                addMessage('Message from worker: ' + JSON.stringify(event.data));
+                statusDiv.textContent = 'Worker is responding!';
+            });
+
+            worker.addEventListener('error', (error) => {
+                addMessage('Worker error: ' + error.message);
+                statusDiv.textContent = 'Worker error!';
+            });
+
+            addMessage('Sending init message...');
+            worker.postMessage({ type: 'init' });
+            statusDiv.textContent = 'Waiting for worker...';
+        } catch (error) {
+            addMessage('Error: ' + error.message);
+            statusDiv.textContent = 'Error!';
+        }
+    </script>
+</body>
+</html>
