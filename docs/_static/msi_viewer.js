@@ -199,10 +199,7 @@ class MSIViewer {
     const maxTotalSize = 500 * 1024 * 1024; // 500MB
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
     if (totalSize > maxTotalSize) {
-      this.loadingIndicator.style.display = 'block';
-      this.loadingIndicator.textContent = `Warning: Total file size (${Math.round(totalSize / 1024 / 1024)}MB) exceeds recommended limit (${Math.round(maxTotalSize / 1024 / 1024)}MB). Loading may be slow or fail.`;
-      // Allow the user to proceed anyway
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.warn(`Total file size (${Math.round(totalSize / 1024 / 1024)}MB) exceeds recommended limit (${Math.round(maxTotalSize / 1024 / 1024)}MB). Loading may be slow.`);
     }
 
     // Show info about selected files
