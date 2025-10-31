@@ -237,6 +237,12 @@ async function getStreamsData() {
 // Load table data for a specific table
 async function loadTableData(tableName) {
   try {
+    // Validate table name to contain only safe characters
+    // MSI table names should only contain alphanumeric characters, underscores, and dots
+    if (!/^[a-zA-Z0-9_.]+$/.test(tableName)) {
+      throw new Error('Invalid table name: contains unsupported characters');
+    }
+    
     // Set the table name as a variable in Python scope to avoid code injection
     pyodide.globals.set('selected_table_name', tableName);
     

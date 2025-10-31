@@ -26,6 +26,7 @@ class MSIViewer {
     this.tablesData = [];
     this.isWorkerReady = false;
     this._loadRetries = 0;
+    this._loadRetryTimeout = null;
     this.initElements();
     this.initEventListeners();
     this.initWorker();
@@ -397,17 +398,29 @@ class MSIViewer {
           this.WORKER_INIT_BASE_DELAY * Math.pow(this.WORKER_INIT_BACKOFF_FACTOR, this._loadRetries - 1),
           this.WORKER_INIT_MAX_DELAY
         );
-        setTimeout(() => this.loadMsiFileFromArrayBuffer(arrayBuffer, fileName), delay);
+        // Clear any existing timeout to prevent memory buildup
+        if (this._loadRetryTimeout) {
+          clearTimeout(this._loadRetryTimeout);
+        }
+        this._loadRetryTimeout = setTimeout(() => {
+          this._loadRetryTimeout = null;
+          this.loadMsiFileFromArrayBuffer(arrayBuffer, fileName);
+        }, delay);
       } else {
         this.loadingIndicator.classList.add('error');
         this.loadingIndicator.textContent = 'Worker initialization timeout. Please refresh the page.';
         this._loadRetries = 0;
+        this._loadRetryTimeout = null;
       }
       return;
     }
 
-    // Reset retry counter on success
+    // Reset retry counter and timeout on success
     this._loadRetries = 0;
+    if (this._loadRetryTimeout) {
+      clearTimeout(this._loadRetryTimeout);
+      this._loadRetryTimeout = null;
+    }
 
     // Send the file to the worker for processing
     this.worker.postMessage({
