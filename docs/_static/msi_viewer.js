@@ -32,6 +32,12 @@ class MSIViewer {
     this.loadExampleFileButton = document.getElementById('load-example-file-button');
   }
 
+  // Normalize path to use forward slashes and ensure it starts with /
+  normalizePath(path) {
+    const normalized = path.replace(/\\/g, '/');
+    return normalized.startsWith('/') ? normalized : `/${normalized}`;
+  }
+
   // Set up event listeners
   initEventListeners() {
     this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
@@ -125,16 +131,21 @@ class MSIViewer {
       // Write additional files (e.g., .cab files) to the same directory
       if (additionalFiles && additionalFiles.length > 0) {
         this.loadingIndicator.textContent = `Writing ${additionalFiles.length} additional file(s)...`;
-        for (const { data, name, path } of additionalFiles) {
-          const filePath = path || `/${name}`;
+        for (const fileObj of additionalFiles) {
+          const { data, name, path: customPath } = fileObj;
+          const filePath = customPath || `/${name}`;
           // Create directory if path includes subdirectories
           if (filePath.includes('/') && filePath !== `/${name}`) {
             const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
             try {
               this.pyodide.FS.mkdirTree(dirPath);
             } catch (e) {
-              // Directory might already exist
-              console.log(`Directory ${dirPath} creation skipped:`, e.message);
+              // Only ignore EEXIST errors (directory already exists)
+              if (!e.message || !e.message.includes('exists')) {
+                console.error(`Failed to create directory ${dirPath}:`, e);
+                throw e;
+              }
+              console.log(`Directory ${dirPath} already exists`);
             }
           }
           this.pyodide.FS.writeFile(filePath, new Uint8Array(data));
@@ -260,11 +271,8 @@ class MSIViewer {
           const file = fileInput.files[0];
           const fileData = await file.arrayBuffer();
 
-          // Determine the path for the cab file
-          // If missingFileName includes a subdirectory, preserve it
-          const cabPath = missingFileName.includes('/') || missingFileName.includes('\\')
-            ? `/${missingFileName.replace(/\\/g, '/')}`
-            : `/${missingFileName}`;
+          // Determine the path for the cab file using utility function
+          const cabPath = this.normalizePath(missingFileName);
 
           // Add to additional files and retry loading
           const newAdditionalFiles = this.lastAdditionalFiles ? [...this.lastAdditionalFiles] : [];
