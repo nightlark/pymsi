@@ -14,9 +14,12 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     <div class="file-input-container">
       <input type="file" id="msi-file-input" accept=".msi,.cab" multiple />
       <label for="msi-file-input" class="file-input-label">
-        <span class="file-input-text">Choose MSI File (+ optional .cab files)</span>
+        <span class="file-input-text">Choose MSI File</span>
         <span class="file-input-icon">📁</span>
       </label>
+    </div>
+    <div style="margin-top: 0.3rem; font-size: 0.85em; color: #666; text-align: center;">
+      You can also select .cab files if the MSI references external cabinet files
     </div>
     <div id="selected-files-info" style="display: none; margin-top: 0.5rem; font-size: 0.9em; color: #555;"></div>
     <div id="loading-indicator" style="display: none;">Loading...</div>

@@ -111,6 +111,10 @@ class MSIViewer {
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = 'Reading MSI file...';
 
+    // Store for potential retry with missing cab files
+    this.lastMsiArrayBuffer = arrayBuffer;
+    this.lastAdditionalFiles = additionalFiles;
+
     try {
       // Read the file as an ArrayBuffer
       const msiBinaryData = new Uint8Array(arrayBuffer);
@@ -121,8 +125,18 @@ class MSIViewer {
       // Write additional files (e.g., .cab files) to the same directory
       if (additionalFiles && additionalFiles.length > 0) {
         this.loadingIndicator.textContent = `Writing ${additionalFiles.length} additional file(s)...`;
-        for (const { data, name } of additionalFiles) {
-          const filePath = `/${name}`;
+        for (const { data, name, path } of additionalFiles) {
+          const filePath = path || `/${name}`;
+          // Create directory if path includes subdirectories
+          if (filePath.includes('/') && filePath !== `/${name}`) {
+            const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
+            try {
+              this.pyodide.FS.mkdirTree(dirPath);
+            } catch (e) {
+              // Directory might already exist
+              console.log(`Directory ${dirPath} creation skipped:`, e.message);
+            }
+          }
           this.pyodide.FS.writeFile(filePath, new Uint8Array(data));
           console.log(`Wrote additional file: ${filePath}`);
         }
@@ -158,24 +172,124 @@ class MSIViewer {
 
       this.loadingIndicator.style.display = 'none';
     } catch (error) {
-      this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
       console.error('Error processing MSI:', error);
 
-      // Show a more helpful error message if it's related to missing cab files
+      // Check if it's a missing external cab file error
       if (error.message && error.message.includes('External media file') && error.message.includes('not found')) {
-        // Clear and rebuild the loading indicator content safely
+        // Extract the missing file name from error message
+        const match = error.message.match(/External media file '([^']+)' not found/);
+        const missingFileName = match ? match[1] : null;
+
+        if (missingFileName) {
+          // Prompt user to select the missing file
+          const shouldPrompt = await this.promptForMissingCabFile(missingFileName);
+          if (shouldPrompt) {
+            return; // Exit early, the prompt will handle retry
+          }
+        }
+
+        // If we couldn't extract the filename or user cancelled, show error
         this.loadingIndicator.textContent = '';
-        const errorText = document.createTextNode(`Error processing MSI file: ${error.message}`);
+        const errorText = document.createTextNode(`Error: Missing external cabinet file`);
         this.loadingIndicator.appendChild(errorText);
         this.loadingIndicator.appendChild(document.createElement('br'));
         this.loadingIndicator.appendChild(document.createElement('br'));
-        const tipStrong = document.createElement('strong');
-        tipStrong.textContent = 'Tip:';
-        this.loadingIndicator.appendChild(tipStrong);
-        const tipText = document.createTextNode(' This MSI file references external .cab files. Please select all files together (the .msi file and any .cab files in the same folder).');
+        const tipText = document.createTextNode(`The MSI file references an external .cab file that was not found: ${missingFileName || 'unknown'}`);
         this.loadingIndicator.appendChild(tipText);
+      } else {
+        // For other errors, show the error message
+        this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
       }
     }
+  }
+
+  // Prompt user to select a missing cab file
+  async promptForMissingCabFile(missingFileName) {
+    return new Promise((resolve) => {
+      // Clear loading indicator and show prompt
+      this.loadingIndicator.textContent = '';
+      this.loadingIndicator.style.display = 'block';
+
+      const promptContainer = document.createElement('div');
+      promptContainer.style.cssText = 'background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 6px; margin: 10px 0;';
+
+      const messageText = document.createElement('p');
+      messageText.style.cssText = 'margin: 0 0 10px 0; font-weight: 500;';
+      messageText.textContent = `Missing cabinet file: ${missingFileName}`;
+      promptContainer.appendChild(messageText);
+
+      const instructionText = document.createElement('p');
+      instructionText.style.cssText = 'margin: 0 0 15px 0; font-size: 0.9em;';
+      instructionText.textContent = 'Please select the missing .cab file from your computer:';
+      promptContainer.appendChild(instructionText);
+
+      // Create file input
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.cab';
+      fileInput.style.cssText = 'margin-bottom: 10px; display: block;';
+
+      // Create buttons container
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.style.cssText = 'display: flex; gap: 10px; margin-top: 10px;';
+
+      const loadButton = document.createElement('button');
+      loadButton.textContent = 'Load File';
+      loadButton.style.cssText = 'padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;';
+      loadButton.disabled = true;
+
+      const cancelButton = document.createElement('button');
+      cancelButton.textContent = 'Cancel';
+      cancelButton.style.cssText = 'padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;';
+
+      buttonsContainer.appendChild(loadButton);
+      buttonsContainer.appendChild(cancelButton);
+
+      promptContainer.appendChild(fileInput);
+      promptContainer.appendChild(buttonsContainer);
+      this.loadingIndicator.appendChild(promptContainer);
+
+      // Enable load button when file is selected
+      fileInput.addEventListener('change', () => {
+        loadButton.disabled = !fileInput.files || fileInput.files.length === 0;
+      });
+
+      // Handle load button click
+      loadButton.addEventListener('click', async () => {
+        if (fileInput.files && fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const fileData = await file.arrayBuffer();
+
+          // Determine the path for the cab file
+          // If missingFileName includes a subdirectory, preserve it
+          const cabPath = missingFileName.includes('/') || missingFileName.includes('\\')
+            ? `/${missingFileName.replace(/\\/g, '/')}`
+            : `/${missingFileName}`;
+
+          // Add to additional files and retry loading
+          const newAdditionalFiles = this.lastAdditionalFiles ? [...this.lastAdditionalFiles] : [];
+          newAdditionalFiles.push({
+            name: file.name,
+            data: fileData,
+            path: cabPath
+          });
+
+          this.loadingIndicator.textContent = '';
+          promptContainer.remove();
+
+          // Retry loading with the new file
+          await this.loadMsiFileFromArrayBuffer(this.lastMsiArrayBuffer, this.currentFileName, newAdditionalFiles);
+          resolve(true);
+        }
+      });
+
+      // Handle cancel button click
+      cancelButton.addEventListener('click', () => {
+        promptContainer.remove();
+        this.loadingIndicator.textContent = 'Loading cancelled by user.';
+        resolve(false);
+      });
+    });
   }
 
   // Handle file selection
@@ -222,6 +336,10 @@ class MSIViewer {
         data: await file.arrayBuffer()
       }))
     );
+
+    // Store for potential retry with missing cab files
+    this.lastMsiArrayBuffer = msiArrayBuffer;
+    this.lastAdditionalFiles = additionalFilesData;
 
     await this.loadMsiFileFromArrayBuffer(msiArrayBuffer, msiFile.name, additionalFilesData);
   }
