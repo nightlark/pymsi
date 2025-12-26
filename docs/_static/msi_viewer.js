@@ -41,38 +41,38 @@ class MSIViewer {
     // 1. Custom ValueError: "External media file '...' not found"
     // 2. FileNotFoundError from resolve(strict=True): "FileNotFoundError" or "No such file or directory"
     // 3. Internal media file error: "Media file '...' not found in the .msi file"
-    
+
     const hasExternalMediaError = errorMessage.includes('External media file') && errorMessage.includes('not found');
     const hasFileNotFoundError = errorMessage.includes('FileNotFoundError') || errorMessage.includes('No such file or directory');
     const hasInternalMediaError = errorMessage.includes('Media file') && errorMessage.includes('not found in the .msi file');
-    
+
     return hasExternalMediaError || hasFileNotFoundError || hasInternalMediaError;
   }
 
   // Extract the missing cab filename from various error message formats
   extractMissingCabFileName(errorMessage) {
     // Try different patterns to extract the filename
-    
+
     // Pattern 1: "External media file '...' not found"
     let match = errorMessage.match(/External media file '([^']+)' not found/);
     if (match) return match[1];
-    
+
     // Pattern 2: "Media file '...' not found in the .msi file"
     match = errorMessage.match(/Media file '([^']+)' not found in the \.msi file/);
     if (match) return match[1];
-    
+
     // Pattern 3: FileNotFoundError with path in the traceback
     // Look for common patterns like '/filename.cab' or 'filename.cab' in FileNotFoundError
     if (errorMessage.includes('FileNotFoundError') || errorMessage.includes('No such file or directory')) {
       // Try to find .cab file references in the error
       match = errorMessage.match(/['"]([^'"]*\.cab)['"]/i);
       if (match) return match[1];
-      
+
       // Try to find path references ending in .cab
       match = errorMessage.match(/\/([^\s\/'"]+\.cab)/i);
       if (match) return match[1];
     }
-    
+
     return null;
   }
 
