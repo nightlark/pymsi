@@ -56,9 +56,9 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
       </div>
       <div id="tables-tab" class="tab-pane">
         <h3>Tables</h3>
-        <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
-          <button id="export-tables-button" disabled style="padding: 0.5rem 1rem; background: #4CAF50; color: white; border: none; cursor: pointer;">Export Tables</button>
-          <select id="export-format-selector" disabled style="padding: 0.5rem;">
+        <div class="export-controls">
+          <button id="export-tables-button" disabled>Export Tables</button>
+          <select id="export-format-selector" disabled>
             <option value="csv">CSV (All tables, zipped)</option>
             <option value="xlsx">Excel Workbook (.xlsx)</option>
             <option value="sqlite">SQLite Database (.db)</option>
@@ -242,13 +242,29 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     cursor: not-allowed;
   }
 
+  .export-controls {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
   #export-tables-button {
     margin-bottom: 0;
+    padding: 0.5rem 1rem;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
   }
 
   #export-tables-button:disabled {
     background: #cccccc;
     cursor: not-allowed;
+  }
+
+  #export-format-selector {
+    padding: 0.5rem;
   }
 
   #export-format-selector:disabled {
