@@ -760,7 +760,7 @@ class MSIViewer {
 
     try {
       const tableNames = await this.getAllTableNames();
-      
+
       if (tableNames.length === 0) {
         this.loadingIndicator.textContent = 'No tables found to export';
         setTimeout(() => {
@@ -796,17 +796,17 @@ class MSIViewer {
   // Export all tables as CSV files in a ZIP
   async exportAsCSV(tableNames) {
     this.loadingIndicator.textContent = 'Exporting tables as CSV...';
-    
+
     const zip = new JSZip();
-    
+
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
       const columns = tableData.get('columns');
       const rows = tableData.get('rows');
-      
+
       // Create CSV content
       let csvContent = columns.join(',') + '\n';
-      
+
       for (const row of rows) {
         const values = columns.map(col => {
           const value = row.get(col);
@@ -820,32 +820,32 @@ class MSIViewer {
         });
         csvContent += values.join(',') + '\n';
       }
-      
+
       zip.file(`${tableName}.csv`, csvContent);
     }
-    
+
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
     const zipFileName = `${baseFileName}_tables.zip`;
-    
+
     this.downloadBlob(zipBlob, zipFileName);
   }
 
   // Export all tables as an Excel workbook
   async exportAsExcel(tableNames) {
     this.loadingIndicator.textContent = 'Exporting tables as Excel...';
-    
+
     if (typeof XLSX === 'undefined') {
       throw new Error('Excel library (SheetJS) not loaded');
     }
-    
+
     const workbook = XLSX.utils.book_new();
-    
+
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
       const columns = tableData.get('columns');
       const rows = tableData.get('rows');
-      
+
       // Convert to array of arrays format for SheetJS
       const data = [columns];
       for (const row of rows) {
@@ -855,51 +855,51 @@ class MSIViewer {
         });
         data.push(rowValues);
       }
-      
+
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       // Excel sheet names have a 31 character limit and can't contain: \ / ? * [ ] : '
       const sheetName = tableName.substring(0, 31).replace(/[:\\\/\?\*\[\]']/g, '_');
       XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     }
-    
+
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    
+
     const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
     const excelFileName = `${baseFileName}_tables.xlsx`;
-    
+
     this.downloadBlob(blob, excelFileName);
   }
 
   // Export all tables as a SQLite database
   async exportAsSQLite(tableNames) {
     this.loadingIndicator.textContent = 'Exporting tables as SQLite...';
-    
+
     if (typeof initSqlJs === 'undefined') {
       throw new Error('SQLite library (sql.js) not loaded');
     }
-    
+
     const SQL = await initSqlJs({
       locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
     });
-    
+
     const db = new SQL.Database();
-    
+
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
       const columns = tableData.get('columns');
       const rows = tableData.get('rows');
-      
+
       // Create table with all columns as TEXT to preserve original data without type conversion
       const columnDefs = columns.map(col => `"${col}" TEXT`).join(', ');
       const createTableSQL = `CREATE TABLE "${tableName}" (${columnDefs})`;
       db.run(createTableSQL);
-      
+
       // Insert data
       if (rows.length > 0) {
         const placeholders = columns.map(() => '?').join(', ');
         const insertSQL = `INSERT INTO "${tableName}" VALUES (${placeholders})`;
-        
+
         for (const row of rows) {
           const values = columns.map(col => {
             const value = row.get(col);
@@ -909,13 +909,13 @@ class MSIViewer {
         }
       }
     }
-    
+
     const binaryArray = db.export();
     const blob = new Blob([binaryArray], { type: 'application/x-sqlite3' });
-    
+
     const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
     const dbFileName = `${baseFileName}_tables.db`;
-    
+
     this.downloadBlob(blob, dbFileName);
     db.close();
   }
@@ -923,14 +923,14 @@ class MSIViewer {
   // Export all tables as JSON
   async exportAsJSON(tableNames) {
     this.loadingIndicator.textContent = 'Exporting tables as JSON...';
-    
+
     const allTables = {};
-    
+
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
       const columns = tableData.get('columns');
       const rows = tableData.get('rows');
-      
+
       // Convert to plain JavaScript objects
       const tableRows = [];
       for (const row of rows) {
@@ -941,16 +941,16 @@ class MSIViewer {
         }
         tableRows.push(rowObj);
       }
-      
+
       allTables[tableName] = tableRows;
     }
-    
+
     const jsonString = JSON.stringify(allTables, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
-    
+
     const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
     const jsonFileName = `${baseFileName}_tables.json`;
-    
+
     this.downloadBlob(blob, jsonFileName);
   }
 
@@ -962,7 +962,7 @@ class MSIViewer {
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    
+
     // Clean up after download starts
     setTimeout(() => {
       document.body.removeChild(a);
