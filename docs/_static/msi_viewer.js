@@ -36,6 +36,10 @@ class MSIViewer {
     // Constants
     this.MAX_ERROR_DISPLAY_LENGTH = 500;
     this.DOWNLOAD_CLEANUP_DELAY_MS = 100; // Delay to ensure download initiates before cleanup
+
+    // Disable file input and load example button initially while Pyodide is loading
+    this.fileInput.disabled = true;
+    this.loadExampleFileButton.disabled = true;
   }
 
   // Check if an error is related to missing cab files
@@ -153,9 +157,14 @@ class MSIViewer {
       this.pymsi = this.pyodide.pyimport('pymsi');
       this.loadingIndicator.style.display = 'none';
       console.log('pymsi loaded successfully');
+
+      // Enable file input and load example button after successful initialization
+      this.fileInput.disabled = false;
+      this.loadExampleFileButton.disabled = false;
     } catch (error) {
       this.loadingIndicator.textContent = `Error loading Pyodide or pymsi: ${error.message}`;
       console.error('Error initializing:', error);
+      // Keep buttons disabled if loading fails
     }
   }
 

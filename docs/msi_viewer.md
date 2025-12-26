@@ -313,6 +313,31 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     border-color: #90caf9;
     outline: none;
   }
+  .example-file-btn:disabled {
+    background: #e0e0e0;
+    color: #9e9e9e;
+    border-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  #msi-file-input:disabled {
+    cursor: not-allowed;
+  }
+
+  #msi-file-input:disabled ~ .file-input-label {
+    background: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    border-color: #999999;
+  }
+
+  #msi-file-input:disabled ~ .file-input-label:hover,
+  .file-input-container:hover #msi-file-input:disabled ~ .file-input-label {
+    background: #cccccc;
+    color: #666666;
+    border-color: #999999;
+    box-shadow: none;
+  }
 </style>
 <script>
 // filepath: pymsi/docs/msi_viewer.md (inline script)
