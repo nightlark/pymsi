@@ -255,6 +255,9 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     background: #4CAF50;
     color: white;
     border: none;
+  }
+
+  #export-tables-button:not(:disabled) {
     cursor: pointer;
   }
 
