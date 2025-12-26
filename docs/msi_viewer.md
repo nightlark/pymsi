@@ -255,8 +255,6 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     background: #4CAF50;
     color: white;
     border: none;
-    height: 2.5rem;
-    line-height: 1.5rem;
   }
 
   #export-tables-button:not(:disabled) {
@@ -270,8 +268,6 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 
   #export-format-selector {
     padding: 0.5rem;
-    height: 2.5rem;
-    line-height: 1.5rem;
   }
 
   #export-format-selector:disabled {
