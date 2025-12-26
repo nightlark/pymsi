@@ -710,11 +710,11 @@ class MSIViewer {
       document.body.appendChild(a);
       a.click();
 
-      // Clean up
+      // Clean up after download starts (100ms delay to ensure download initiates)
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      }, 0);
+      }, 100);
 
       this.loadingIndicator.style.display = 'none';
     } catch (error) {
@@ -857,7 +857,7 @@ class MSIViewer {
       
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       // Excel sheet names have a 31 character limit and can't contain certain characters
-      const sheetName = tableName.substring(0, 31).replace(/[:\\\/\?\*\[\]]/g, '_');
+      const sheetName = tableName.substring(0, 31).replace(/[:\\\/\?\*\[\]']/g, '_');
       XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     }
     
@@ -962,10 +962,11 @@ class MSIViewer {
     document.body.appendChild(a);
     a.click();
     
+    // Clean up after download starts (100ms delay to ensure download initiates)
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    }, 0);
+    }, 100);
   }
 }
 
