@@ -614,9 +614,9 @@ class MSIViewer {
     this.summaryContent.appendChild(table);
   }
 
-  // Load streams information
-  async loadStreams() {
-    const streamsData = await this.pyodide.runPythonAsync(`
+  // Get all stream names (not tables)
+  async getAllStreamNames() {
+    const streamNames = await this.pyodide.runPythonAsync(`
       streams = []
       for k in current_package.ole.root.kids:
         name, is_table = pymsi.streamname.decode_unicode(k.name)
@@ -624,6 +624,12 @@ class MSIViewer {
           streams.append(name)
       to_js(streams)
     `);
+    return streamNames;
+  }
+
+  // Load streams information
+  async loadStreams() {
+    const streamsData = await this.getAllStreamNames();
     console.log('Streams data loaded:', streamsData);
 
     this.streamsContent.innerHTML = '';
@@ -743,14 +749,7 @@ class MSIViewer {
 
     try {
       // Get all stream names (including _StringPool and _StringData)
-      const streamNames = await this.pyodide.runPythonAsync(`
-        streams = []
-        for k in current_package.ole.root.kids:
-          name, is_table = pymsi.streamname.decode_unicode(k.name)
-          if not is_table:
-            streams.append(name)
-        to_js(streams)
-      `);
+      const streamNames = await this.getAllStreamNames();
 
       if (streamNames.length === 0) {
         this.loadingIndicator.textContent = 'No streams found';
@@ -772,10 +771,12 @@ class MSIViewer {
       // Extract each stream
       for (const streamName of streamNames) {
         // Read the stream data using pymsi
+        // Store streamName in Python globals to avoid string injection
+        this.pyodide.globals.set('current_stream_name', streamName);
         const streamData = await this.pyodide.runPythonAsync(`
           import pymsi.streamname
           # Encode the stream name to get the internal OLE name
-          encoded_name = pymsi.streamname.encode_unicode('${streamName.replace(/'/g, "\\'")}', False)
+          encoded_name = pymsi.streamname.encode_unicode(current_stream_name, False)
           # Get the stream from the OLE file
           stream = current_package.ole.openstream(encoded_name)
           stream_data = stream.read()
