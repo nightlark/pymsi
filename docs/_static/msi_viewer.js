@@ -21,6 +21,7 @@ class MSIViewer {
     this.currentFileDisplay = document.getElementById('current-file-display');
     this.selectedFilesInfo = document.getElementById('selected-files-info');
     this.extractButton = document.getElementById('extract-button');
+    this.extractStreamsButton = document.getElementById('extract-streams-button');
     this.exportTablesButton = document.getElementById('export-tables-button');
     this.exportFormatSelector = document.getElementById('export-format-selector');
     this.filesList = document.getElementById('files-list');
@@ -93,6 +94,7 @@ class MSIViewer {
   initEventListeners() {
     this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
     this.extractButton.addEventListener('click', this.extractFiles.bind(this));
+    this.extractStreamsButton.addEventListener('click', this.extractStreams.bind(this));
     this.exportTablesButton.addEventListener('click', this.exportTables.bind(this));
     this.tableSelector.addEventListener('change', this.loadTableData.bind(this));
 
@@ -235,6 +237,7 @@ class MSIViewer {
 
       // Enable the extract button and show current file
       this.extractButton.disabled = false;
+      this.extractStreamsButton.disabled = false;
       this.exportTablesButton.disabled = false;
       this.exportFormatSelector.disabled = false;
       this.currentFileDisplay.textContent = `Currently loaded: ${this.currentFileName}`;
@@ -730,6 +733,87 @@ class MSIViewer {
     } catch (error) {
       this.loadingIndicator.textContent = `Error extracting files: ${error.message}`;
       console.error('Error extracting files:', error);
+    }
+  }
+
+  // Extract all streams and create a ZIP for download
+  async extractStreams() {
+    this.loadingIndicator.style.display = 'block';
+    this.loadingIndicator.textContent = 'Extracting streams...';
+
+    try {
+      // Get all stream names (including _StringPool and _StringData)
+      const streamNames = await this.pyodide.runPythonAsync(`
+        streams = []
+        for k in current_package.ole.root.kids:
+          name, is_table = pymsi.streamname.decode_unicode(k.name)
+          if not is_table:
+            streams.append(name)
+        to_js(streams)
+      `);
+
+      if (streamNames.length === 0) {
+        this.loadingIndicator.textContent = 'No streams found';
+        setTimeout(() => {
+          this.loadingIndicator.style.display = 'none';
+        }, 2000);
+        return;
+      }
+
+      this.loadingIndicator.textContent = 'Creating ZIP archive...';
+
+      // Create ZIP file in JavaScript using JSZip library
+      if (typeof JSZip === 'undefined') {
+        throw new Error('JSZip failed to load.');
+      }
+
+      const zip = new JSZip();
+
+      // Extract each stream
+      for (const streamName of streamNames) {
+        // Read the stream data using pymsi
+        const streamData = await this.pyodide.runPythonAsync(`
+          import pymsi.streamname
+          # Encode the stream name to get the internal OLE name
+          encoded_name = pymsi.streamname.encode_unicode('${streamName.replace(/'/g, "\\'")}', False)
+          # Get the stream from the OLE file
+          stream = current_package.ole.openstream(encoded_name)
+          stream_data = stream.read()
+          to_js(stream_data)
+        `);
+
+        // Convert to Uint8Array if needed
+        const streamBytes = streamData instanceof Uint8Array ? streamData : new Uint8Array(streamData);
+        
+        // Add to ZIP with a safe filename
+        zip.file(streamName, streamBytes);
+      }
+
+      // Generate ZIP blob
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+      // Create filename based on MSI name
+      const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
+      const zipFileName = `${baseFileName}_streams.zip`;
+
+      // Trigger download
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = zipFileName;
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up after download starts
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, this.DOWNLOAD_CLEANUP_DELAY_MS);
+
+      this.loadingIndicator.style.display = 'none';
+    } catch (error) {
+      this.loadingIndicator.textContent = `Error extracting streams: ${error.message}`;
+      console.error('Error extracting streams:', error);
     }
   }
 
