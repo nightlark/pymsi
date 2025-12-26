@@ -35,6 +35,7 @@ class MSIViewer {
 
     // Constants
     this.MAX_ERROR_DISPLAY_LENGTH = 500;
+    this.DOWNLOAD_CLEANUP_DELAY_MS = 100; // Delay to ensure download initiates before cleanup
   }
 
   // Check if an error is related to missing cab files
@@ -710,11 +711,11 @@ class MSIViewer {
       document.body.appendChild(a);
       a.click();
 
-      // Clean up after download starts (100ms delay to ensure download initiates)
+      // Clean up after download starts
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      }, 100);
+      }, this.DOWNLOAD_CLEANUP_DELAY_MS);
 
       this.loadingIndicator.style.display = 'none';
     } catch (error) {
@@ -856,7 +857,7 @@ class MSIViewer {
       }
       
       const worksheet = XLSX.utils.aoa_to_sheet(data);
-      // Excel sheet names have a 31 character limit and can't contain certain characters
+      // Excel sheet names have a 31 character limit and can't contain: \ / ? * [ ] : '
       const sheetName = tableName.substring(0, 31).replace(/[:\\\/\?\*\[\]']/g, '_');
       XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     }
@@ -889,7 +890,7 @@ class MSIViewer {
       const columns = tableData.get('columns');
       const rows = tableData.get('rows');
       
-      // Create table with all columns as TEXT for simplicity
+      // Create table with all columns as TEXT to preserve original data without type conversion
       const columnDefs = columns.map(col => `"${col}" TEXT`).join(', ');
       const createTableSQL = `CREATE TABLE "${tableName}" (${columnDefs})`;
       db.run(createTableSQL);
@@ -962,11 +963,11 @@ class MSIViewer {
     document.body.appendChild(a);
     a.click();
     
-    // Clean up after download starts (100ms delay to ensure download initiates)
+    // Clean up after download starts
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    }, 100);
+    }, this.DOWNLOAD_CLEANUP_DELAY_MS);
   }
 }
 
