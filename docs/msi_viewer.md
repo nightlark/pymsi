@@ -4,18 +4,24 @@ This interactive tool allows you to view the contents of MSI files and extract t
 
 Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) using Pyodide.
 
+**Note:** Some MSI installers reference external `.cab` files. If your MSI file uses external cab files, you can select multiple files at once (the `.msi` file and any `.cab` files) to ensure all files can be extracted properly.
+
 <div id="msi-viewer-app">
   <div class="file-selector">
     <div style="margin-bottom: 1rem;">
       <button id="load-example-file-button" type="button" class="example-file-btn">Load example file</button>
     </div>
     <div class="file-input-container">
-      <input type="file" id="msi-file-input" accept=".msi" />
+      <input type="file" id="msi-file-input" accept=".msi,.cab" multiple />
       <label for="msi-file-input" class="file-input-label">
         <span class="file-input-text">Choose MSI File</span>
         <span class="file-input-icon">📁</span>
       </label>
     </div>
+    <div style="margin-top: 0.3rem; font-size: 0.85em; color: #666; text-align: center;">
+      You can also select .cab files if the MSI references external cabinet files
+    </div>
+    <div id="selected-files-info" style="display: none; margin-top: 0.5rem; font-size: 0.9em; color: #555;"></div>
     <div id="loading-indicator" style="display: none;">Loading...</div>
   </div>
 
