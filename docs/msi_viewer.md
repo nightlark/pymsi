@@ -271,7 +271,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   }
 
   #export-format-selector {
-    padding: 0.5rem;
+    padding: 0.2rem;
     line-height: 1rem;
     height: 1.5rem;
   }
