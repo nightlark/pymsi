@@ -9,10 +9,10 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 <div id="msi-viewer-app">
   <div class="file-selector">
     <div style="margin-bottom: 1rem;">
-      <button id="load-example-file-button" type="button" class="example-file-btn">Load example file</button>
+      <button id="load-example-file-button" type="button" class="example-file-btn" disabled>Load example file</button>
     </div>
     <div class="file-input-container">
-      <input type="file" id="msi-file-input" accept=".msi,.cab" multiple />
+      <input type="file" id="msi-file-input" accept=".msi,.cab" multiple disabled />
       <label for="msi-file-input" class="file-input-label">
         <span class="file-input-text">Choose MSI File</span>
         <span class="file-input-icon">📁</span>
