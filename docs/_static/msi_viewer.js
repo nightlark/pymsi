@@ -186,9 +186,14 @@ class MSIViewer {
       console.error('Error processing MSI:', error);
 
       // Check if it's a missing external cab file error
-      if (error.message && error.message.includes('External media file') && error.message.includes('not found')) {
+      // The error message might be in a Pyodide traceback or a direct message
+      const errorMessage = error.message || '';
+      const isMissingCabError = errorMessage.includes('External media file') && errorMessage.includes('not found');
+
+      if (isMissingCabError) {
         // Extract the missing file name from error message
-        const match = error.message.match(/External media file '([^']+)' not found/);
+        // Handle both direct messages and Pyodide tracebacks
+        const match = errorMessage.match(/External media file '([^']+)' not found/);
         const missingFileName = match ? match[1] : null;
 
         if (missingFileName) {
@@ -209,7 +214,11 @@ class MSIViewer {
         this.loadingIndicator.appendChild(tipText);
       } else {
         // For other errors, show the error message
-        this.loadingIndicator.textContent = `Error processing MSI file: ${error.message}`;
+        // Truncate very long tracebacks for display
+        const displayMessage = errorMessage.length > 500 
+          ? errorMessage.substring(0, 500) + '...\n\n(Full error logged to console)'
+          : errorMessage;
+        this.loadingIndicator.textContent = `Error processing MSI file: ${displayMessage}`;
       }
     }
   }
