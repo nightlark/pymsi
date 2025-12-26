@@ -56,6 +56,15 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
       </div>
       <div id="tables-tab" class="tab-pane">
         <h3>Tables</h3>
+        <div class="export-controls">
+          <button id="export-tables-button" disabled>Export Tables</button>
+          <select id="export-format-selector" disabled>
+            <option value="csv">CSV (All tables, zipped)</option>
+            <option value="xlsx">Excel Workbook (.xlsx)</option>
+            <option value="sqlite">SQLite Database (.db)</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
         <select id="table-selector"><option>Select an MSI file first</option></select>
         <div id="table-viewer-container">
           <table id="table-viewer">
@@ -226,10 +235,49 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     color: white;
     border: none;
     cursor: pointer;
+    line-height: 1rem;
+    height: 2rem;
   }
 
   #extract-button:disabled {
     background: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .export-controls {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  #export-tables-button {
+    margin-bottom: 0;
+    padding: 0.5rem 1rem;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    line-height: 1rem;
+    height: 2rem;
+  }
+
+  #export-tables-button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  #export-tables-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+  }
+
+  #export-format-selector {
+    padding: 0.2rem;
+    line-height: 1rem;
+    height: 2rem;
+  }
+
+  #export-format-selector:disabled {
+    background: #f0f0f0;
     cursor: not-allowed;
   }
 
@@ -305,6 +353,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <!-- Include JSZip script -->
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<!-- Include SheetJS for Excel export -->
+<script type="text/javascript" src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+<!-- Include sql.js for SQLite export -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
 
 <!-- Include the MSI viewer script with the correct path for ReadTheDocs -->
 <script type="text/javascript" src="_static/msi_viewer.js"></script>
