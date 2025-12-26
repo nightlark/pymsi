@@ -21,6 +21,8 @@ class MSIViewer {
     this.currentFileDisplay = document.getElementById('current-file-display');
     this.selectedFilesInfo = document.getElementById('selected-files-info');
     this.extractButton = document.getElementById('extract-button');
+    this.exportTablesButton = document.getElementById('export-tables-button');
+    this.exportFormatSelector = document.getElementById('export-format-selector');
     this.filesList = document.getElementById('files-list');
     this.tableSelector = document.getElementById('table-selector');
     this.tableHeader = document.getElementById('table-header');
@@ -86,6 +88,7 @@ class MSIViewer {
   initEventListeners() {
     this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
     this.extractButton.addEventListener('click', this.extractFiles.bind(this));
+    this.exportTablesButton.addEventListener('click', this.exportTables.bind(this));
     this.tableSelector.addEventListener('change', this.loadTableData.bind(this));
 
     // Tab switching
@@ -222,6 +225,8 @@ class MSIViewer {
 
       // Enable the extract button and show current file
       this.extractButton.disabled = false;
+      this.exportTablesButton.disabled = false;
+      this.exportFormatSelector.disabled = false;
       this.currentFileDisplay.textContent = `Currently loaded: ${this.currentFileName}`;
       this.currentFileDisplay.style.display = 'block';
 
@@ -716,6 +721,251 @@ class MSIViewer {
       this.loadingIndicator.textContent = `Error extracting files: ${error.message}`;
       console.error('Error extracting files:', error);
     }
+  }
+
+  // Get all table names, filtering out _StringPool and _StringData
+  async getAllTableNames() {
+    const tables = await this.pyodide.runPythonAsync(`
+      tables = []
+      for k in current_package.ole.root.kids:
+        name, is_table = pymsi.streamname.decode_unicode(k.name)
+        if is_table and name not in ['_StringPool', '_StringData']:
+          tables.append(name)
+      to_js(tables)
+    `);
+    return tables;
+  }
+
+  // Get all data for a specific table
+  async getTableData(tableName) {
+    const tableData = await this.pyodide.runPythonAsync(`
+      result = {'columns': [], 'rows': []}
+      try:
+        table = current_package.get('${tableName}')
+        result['columns'] = [column.name for column in table.columns]
+        result['rows'] = [row for row in table.rows]
+      except Exception as e:
+        print(f"Error getting table data: {e}")
+      to_js(result)
+    `);
+    return tableData;
+  }
+
+  // Export tables in the selected format
+  async exportTables() {
+    const format = this.exportFormatSelector.value;
+    this.loadingIndicator.style.display = 'block';
+    this.loadingIndicator.textContent = 'Preparing table export...';
+
+    try {
+      const tableNames = await this.getAllTableNames();
+      
+      if (tableNames.length === 0) {
+        this.loadingIndicator.textContent = 'No tables found to export';
+        setTimeout(() => {
+          this.loadingIndicator.style.display = 'none';
+        }, 2000);
+        return;
+      }
+
+      switch (format) {
+        case 'csv':
+          await this.exportAsCSV(tableNames);
+          break;
+        case 'xlsx':
+          await this.exportAsExcel(tableNames);
+          break;
+        case 'sqlite':
+          await this.exportAsSQLite(tableNames);
+          break;
+        case 'json':
+          await this.exportAsJSON(tableNames);
+          break;
+        default:
+          throw new Error(`Unsupported format: ${format}`);
+      }
+
+      this.loadingIndicator.style.display = 'none';
+    } catch (error) {
+      this.loadingIndicator.textContent = `Error exporting tables: ${error.message}`;
+      console.error('Error exporting tables:', error);
+    }
+  }
+
+  // Export all tables as CSV files in a ZIP
+  async exportAsCSV(tableNames) {
+    this.loadingIndicator.textContent = 'Exporting tables as CSV...';
+    
+    const zip = new JSZip();
+    
+    for (const tableName of tableNames) {
+      const tableData = await this.getTableData(tableName);
+      const columns = tableData.get('columns');
+      const rows = tableData.get('rows');
+      
+      // Create CSV content
+      let csvContent = columns.join(',') + '\n';
+      
+      for (const row of rows) {
+        const values = columns.map(col => {
+          const value = row.get(col);
+          if (value === null || value === undefined) return '';
+          // Escape quotes and wrap in quotes if contains comma, quote, or newline
+          const strValue = String(value);
+          if (strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
+            return '"' + strValue.replace(/"/g, '""') + '"';
+          }
+          return strValue;
+        });
+        csvContent += values.join(',') + '\n';
+      }
+      
+      zip.file(`${tableName}.csv`, csvContent);
+    }
+    
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
+    const zipFileName = `${baseFileName}_tables.zip`;
+    
+    this.downloadBlob(zipBlob, zipFileName);
+  }
+
+  // Export all tables as an Excel workbook
+  async exportAsExcel(tableNames) {
+    this.loadingIndicator.textContent = 'Exporting tables as Excel...';
+    
+    if (typeof XLSX === 'undefined') {
+      throw new Error('Excel library (SheetJS) not loaded');
+    }
+    
+    const workbook = XLSX.utils.book_new();
+    
+    for (const tableName of tableNames) {
+      const tableData = await this.getTableData(tableName);
+      const columns = tableData.get('columns');
+      const rows = tableData.get('rows');
+      
+      // Convert to array of arrays format for SheetJS
+      const data = [columns];
+      for (const row of rows) {
+        const rowValues = columns.map(col => {
+          const value = row.get(col);
+          return value === null || value === undefined ? '' : value;
+        });
+        data.push(rowValues);
+      }
+      
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      // Excel sheet names have a 31 character limit and can't contain certain characters
+      const sheetName = tableName.substring(0, 31).replace(/[:\\\/\?\*\[\]]/g, '_');
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    }
+    
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
+    const excelFileName = `${baseFileName}_tables.xlsx`;
+    
+    this.downloadBlob(blob, excelFileName);
+  }
+
+  // Export all tables as a SQLite database
+  async exportAsSQLite(tableNames) {
+    this.loadingIndicator.textContent = 'Exporting tables as SQLite...';
+    
+    if (typeof initSqlJs === 'undefined') {
+      throw new Error('SQLite library (sql.js) not loaded');
+    }
+    
+    const SQL = await initSqlJs({
+      locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
+    });
+    
+    const db = new SQL.Database();
+    
+    for (const tableName of tableNames) {
+      const tableData = await this.getTableData(tableName);
+      const columns = tableData.get('columns');
+      const rows = tableData.get('rows');
+      
+      // Create table with all columns as TEXT for simplicity
+      const columnDefs = columns.map(col => `"${col}" TEXT`).join(', ');
+      const createTableSQL = `CREATE TABLE "${tableName}" (${columnDefs})`;
+      db.run(createTableSQL);
+      
+      // Insert data
+      if (rows.length > 0) {
+        const placeholders = columns.map(() => '?').join(', ');
+        const insertSQL = `INSERT INTO "${tableName}" VALUES (${placeholders})`;
+        
+        for (const row of rows) {
+          const values = columns.map(col => {
+            const value = row.get(col);
+            return value === null || value === undefined ? null : String(value);
+          });
+          db.run(insertSQL, values);
+        }
+      }
+    }
+    
+    const binaryArray = db.export();
+    const blob = new Blob([binaryArray], { type: 'application/x-sqlite3' });
+    
+    const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
+    const dbFileName = `${baseFileName}_tables.db`;
+    
+    this.downloadBlob(blob, dbFileName);
+    db.close();
+  }
+
+  // Export all tables as JSON
+  async exportAsJSON(tableNames) {
+    this.loadingIndicator.textContent = 'Exporting tables as JSON...';
+    
+    const allTables = {};
+    
+    for (const tableName of tableNames) {
+      const tableData = await this.getTableData(tableName);
+      const columns = tableData.get('columns');
+      const rows = tableData.get('rows');
+      
+      // Convert to plain JavaScript objects
+      const tableRows = [];
+      for (const row of rows) {
+        const rowObj = {};
+        for (const col of columns) {
+          const value = row.get(col);
+          rowObj[col] = value === null || value === undefined ? null : value;
+        }
+        tableRows.push(rowObj);
+      }
+      
+      allTables[tableName] = tableRows;
+    }
+    
+    const jsonString = JSON.stringify(allTables, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    
+    const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
+    const jsonFileName = `${baseFileName}_tables.json`;
+    
+    this.downloadBlob(blob, jsonFileName);
+  }
+
+  // Helper function to download a blob
+  downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
   }
 }
 
