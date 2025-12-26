@@ -30,6 +30,14 @@ class MSIViewer {
     this.tabButtons = document.querySelectorAll('.tab-button');
     this.tabPanes = document.querySelectorAll('.tab-pane');
     this.loadExampleFileButton = document.getElementById('load-example-file-button');
+
+    // Constants
+    this.MAX_ERROR_DISPLAY_LENGTH = 500;
+  }
+
+  // Check if an error is related to missing cab files
+  isMissingCabFileError(errorMessage) {
+    return errorMessage.includes('External media file') && errorMessage.includes('not found');
   }
 
   // Normalize path to use forward slashes and ensure it starts with /
@@ -188,9 +196,8 @@ class MSIViewer {
       // Check if it's a missing external cab file error
       // The error message might be in a Pyodide traceback or a direct message
       const errorMessage = error.message || '';
-      const isMissingCabError = errorMessage.includes('External media file') && errorMessage.includes('not found');
 
-      if (isMissingCabError) {
+      if (this.isMissingCabFileError(errorMessage)) {
         // Extract the missing file name from error message
         // Handle both direct messages and Pyodide tracebacks
         const match = errorMessage.match(/External media file '([^']+)' not found/);
@@ -215,8 +222,8 @@ class MSIViewer {
       } else {
         // For other errors, show the error message
         // Truncate very long tracebacks for display
-        const displayMessage = errorMessage.length > 500
-          ? errorMessage.substring(0, 500) + '...\n\n(Full error logged to console)'
+        const displayMessage = errorMessage.length > this.MAX_ERROR_DISPLAY_LENGTH
+          ? errorMessage.substring(0, this.MAX_ERROR_DISPLAY_LENGTH) + '...\n\n(Full error logged to console)'
           : errorMessage;
         this.loadingIndicator.textContent = `Error processing MSI file: ${displayMessage}`;
       }
