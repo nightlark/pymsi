@@ -215,7 +215,7 @@ class MSIViewer {
       } else {
         // For other errors, show the error message
         // Truncate very long tracebacks for display
-        const displayMessage = errorMessage.length > 500 
+        const displayMessage = errorMessage.length > 500
           ? errorMessage.substring(0, 500) + '...\n\n(Full error logged to console)'
           : errorMessage;
         this.loadingIndicator.textContent = `Error processing MSI file: ${displayMessage}`;
