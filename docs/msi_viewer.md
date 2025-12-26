@@ -9,10 +9,10 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 <div id="msi-viewer-app">
   <div class="file-selector">
     <div style="margin-bottom: 1rem;">
-      <button id="load-example-file-button" type="button" class="example-file-btn">Load example file</button>
+      <button id="load-example-file-button" type="button" class="example-file-btn" disabled>Load example file</button>
     </div>
     <div class="file-input-container">
-      <input type="file" id="msi-file-input" accept=".msi,.cab" multiple />
+      <input type="file" id="msi-file-input" accept=".msi,.cab" multiple disabled />
       <label for="msi-file-input" class="file-input-label">
         <span class="file-input-text">Choose MSI File</span>
         <span class="file-input-icon">📁</span>
@@ -312,6 +312,31 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     color: #005a9e;
     border-color: #90caf9;
     outline: none;
+  }
+  .example-file-btn:disabled {
+    background: #e0e0e0;
+    color: #9e9e9e;
+    border-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  #msi-file-input:disabled {
+    cursor: not-allowed;
+  }
+
+  #msi-file-input:disabled ~ .file-input-label {
+    background: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    border-color: #999999;
+  }
+
+  #msi-file-input:disabled ~ .file-input-label:hover,
+  .file-input-container:hover #msi-file-input:disabled ~ .file-input-label {
+    background: #cccccc;
+    color: #666666;
+    border-color: #999999;
+    box-shadow: none;
   }
 </style>
 <script>
