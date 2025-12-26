@@ -236,7 +236,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     border: none;
     cursor: pointer;
     line-height: 1rem;
-    height: 1.5rem;
+    height: 2rem;
   }
 
   #extract-button:disabled {
@@ -258,7 +258,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     color: white;
     border: none;
     line-height: 1rem;
-    height: 1.5rem;
+    height: 2rem;
   }
 
   #export-tables-button:not(:disabled) {
@@ -273,7 +273,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   #export-format-selector {
     padding: 0.2rem;
     line-height: 1rem;
-    height: 1.5rem;
+    height: 2rem;
   }
 
   #export-format-selector:disabled {
