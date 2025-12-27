@@ -788,8 +788,26 @@ class MSIViewer {
           this.pyodide.globals.set('current_stream_name', streamName);
           const streamData = await this.pyodide.runPythonAsync(`
             import pymsi.streamname
-            # Encode the stream name to get the internal OLE name
-            encoded_name = pymsi.streamname.encode_unicode(current_stream_name, False)
+            
+            # Special streams like SummaryInformation, DigitalSignature, etc.
+            # start with special characters and should not be encoded
+            # Only table-like streams (_StringPool, _StringData) need encoding
+            if current_stream_name.startswith('_'):
+              # Table streams need to be encoded
+              encoded_name = pymsi.streamname.encode_unicode(current_stream_name, True)
+            else:
+              # Non-table streams (like SummaryInformation) are already in the correct format
+              # They were decoded from the OLE structure, so we need to use the raw name
+              # from the OLE file directly
+              # Find the raw stream name in the OLE structure
+              encoded_name = None
+              for k in current_package.ole.root.kids:
+                decoded_name, is_table = pymsi.streamname.decode_unicode(k.name)
+                if decoded_name == current_stream_name:
+                  encoded_name = k.name
+                  break
+              if encoded_name is None:
+                raise ValueError(f"Stream '{current_stream_name}' not found in OLE structure")
             
             # Log debugging information
             print(f"[DEBUG] Attempting to open stream: {current_stream_name}")
