@@ -777,9 +777,9 @@ class MSIViewer {
           import pymsi.streamname
           # Encode the stream name to get the internal OLE name
           encoded_name = pymsi.streamname.encode_unicode(current_stream_name, False)
-          # Get the stream from the OLE file
-          stream = current_package.ole.openstream(encoded_name)
-          stream_data = stream.read()
+          # Read the stream using a context manager to ensure proper cleanup
+          with current_package.ole.openstream(encoded_name) as stream:
+            stream_data = stream.read()
           to_js(stream_data)
         `);
 
