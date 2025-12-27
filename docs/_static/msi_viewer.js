@@ -214,12 +214,12 @@ class MSIViewer {
 
       // Create Package and Msi objects using BytesIO to keep data in memory
       this.loadingIndicator.textContent = 'Processing MSI file...';
+      // Pass the MSI data directly to Python instead of re-reading from filesystem
+      this.pyodide.globals.set('msi_binary_data', msiBinaryData);
       await this.pyodide.runPythonAsync(`
         import io
-        # Read the MSI file data into a BytesIO object
-        with open('/uploaded.msi', 'rb') as f:
-          msi_data = f.read()
-        msi_bytesio = io.BytesIO(msi_data)
+        # Create BytesIO from the binary data passed from JavaScript
+        msi_bytesio = io.BytesIO(bytes(msi_binary_data))
         # Create Package with BytesIO instead of Path to keep data in memory
         current_package = pymsi.Package(msi_bytesio)
         current_msi = pymsi.Msi(current_package, True)
