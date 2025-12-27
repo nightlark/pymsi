@@ -750,6 +750,11 @@ class MSIViewer {
     try {
       // Get all stream names (including _StringPool and _StringData)
       const streamNames = await this.getAllStreamNames();
+      
+      // Add _StringData and _StringPool as they are tables and won't appear in the regular stream list
+      // but should be included in the stream extraction
+      streamNames.push('_StringData');
+      streamNames.push('_StringPool');
 
       if (streamNames.length === 0) {
         this.loadingIndicator.textContent = 'No streams found';
@@ -768,14 +773,9 @@ class MSIViewer {
 
       const zip = new JSZip();
 
-      // Log stream extraction start
-      console.log(`[DEBUG] Starting stream extraction for ${streamNames.length} streams:`, streamNames);
-
       // Extract each stream
       for (const streamName of streamNames) {
         try {
-          console.log(`[DEBUG] Processing stream: ${streamName}`);
-          
           // Read the stream data using pymsi
           // Store streamName in Python globals to avoid string injection
           this.pyodide.globals.set('current_stream_name', streamName);
@@ -802,30 +802,9 @@ class MSIViewer {
               if encoded_name is None:
                 raise ValueError(f"Stream '{current_stream_name}' not found in OLE structure")
             
-            # Log debugging information
-            print(f"[DEBUG] Attempting to open stream: {current_stream_name}")
-            print(f"[DEBUG] Encoded stream name: {encoded_name}")
-            print(f"[DEBUG] OLE object type: {type(current_package.ole)}")
-            print(f"[DEBUG] OLE object exists: {current_package.ole is not None}")
-            print(f"[DEBUG] OLE file attribute: {hasattr(current_package.ole, 'fp')}")
-            if hasattr(current_package.ole, 'fp'):
-              print(f"[DEBUG] OLE fp type: {type(current_package.ole.fp)}")
-              print(f"[DEBUG] OLE fp closed: {getattr(current_package.ole.fp, 'closed', 'N/A')}")
-            
-            # List all available streams
-            try:
-              all_streams = []
-              for entry in current_package.ole.listdir():
-                stream_path = '/'.join(entry) if isinstance(entry, (list, tuple)) else str(entry)
-                all_streams.append(stream_path)
-              print(f"[DEBUG] Available streams: {all_streams}")
-            except Exception as e:
-              print(f"[DEBUG] Error listing streams: {e}")
-            
             # Read the stream using a context manager to ensure proper cleanup
             with current_package.ole.openstream(encoded_name) as stream:
               stream_data = stream.read()
-            print(f"[DEBUG] Successfully read {len(stream_data)} bytes from {current_stream_name}")
             to_js(stream_data)
           `);
           // Clean up the temporary global variable
@@ -842,8 +821,6 @@ class MSIViewer {
           } else {
             throw new Error(`Unexpected stream data type for ${streamName}`);
           }
-          
-          console.log(`[DEBUG] Successfully extracted ${streamBytes.length} bytes for ${streamName}`);
           
           // Add to ZIP with a safe filename
           zip.file(streamName, streamBytes);
