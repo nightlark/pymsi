@@ -212,11 +212,16 @@ class MSIViewer {
         }
       }
 
-      // Create Package and Msi objects using the file path
+      // Create Package and Msi objects using BytesIO to keep data in memory
       this.loadingIndicator.textContent = 'Processing MSI file...';
       await this.pyodide.runPythonAsync(`
-        from pathlib import Path
-        current_package = pymsi.Package(Path('/uploaded.msi'))
+        import io
+        # Read the MSI file data into a BytesIO object
+        with open('/uploaded.msi', 'rb') as f:
+          msi_data = f.read()
+        msi_bytesio = io.BytesIO(msi_data)
+        # Create Package with BytesIO instead of Path to keep data in memory
+        current_package = pymsi.Package(msi_bytesio)
         current_msi = pymsi.Msi(current_package, True)
       `);
 
