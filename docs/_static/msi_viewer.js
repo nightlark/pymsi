@@ -224,6 +224,8 @@ class MSIViewer {
         current_package = pymsi.Package(msi_bytesio)
         current_msi = pymsi.Msi(current_package, True)
       `);
+      // Clean up the temporary global variable to prevent memory leaks
+      this.pyodide.globals.delete('msi_binary_data');
 
       this.currentPackage = await this.pyodide.globals.get('current_package');
       this.currentMsi = await this.pyodide.globals.get('current_msi');
