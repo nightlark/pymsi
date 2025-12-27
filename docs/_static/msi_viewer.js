@@ -90,6 +90,70 @@ class MSIViewer {
     return normalized.startsWith('/') ? normalized : `/${normalized}`;
   }
 
+  // Prompt user to select which MSI to open when multiple are provided
+  async promptForMsiSelection(msiFiles) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:9999;';
+
+      const dialog = document.createElement('div');
+      dialog.style.cssText = 'background:#fff;padding:16px;border-radius:8px;max-width:400px;width:90%;box-shadow:0 6px 24px rgba(0,0,0,0.2);';
+
+      const title = document.createElement('h3');
+      title.textContent = 'Select MSI to open';
+      title.style.cssText = 'margin:0 0 12px 0;font-size:1.1rem;';
+
+      const select = document.createElement('select');
+      select.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;';
+      msiFiles.forEach((file, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = file.name;
+        select.appendChild(option);
+      });
+
+      const buttons = document.createElement('div');
+      buttons.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.style.cssText = 'padding:6px 12px;';
+      const chooseBtn = document.createElement('button');
+      chooseBtn.textContent = 'Open';
+      chooseBtn.style.cssText = 'padding:6px 12px;background:#007acc;color:#fff;border:none;border-radius:4px;';
+
+      buttons.appendChild(cancelBtn);
+      buttons.appendChild(chooseBtn);
+
+      dialog.appendChild(title);
+      dialog.appendChild(select);
+      dialog.appendChild(buttons);
+      overlay.appendChild(dialog);
+      document.body.appendChild(overlay);
+
+      const cleanup = () => overlay.remove();
+      cancelBtn.addEventListener('click', () => { cleanup(); resolve(null); });
+      chooseBtn.addEventListener('click', () => {
+        const idx = parseInt(select.value, 10);
+        cleanup();
+        resolve(msiFiles[idx]);
+      });
+    });
+  }
+
+  // Filter a FileList/array to keep the chosen MSI and other non-MSI files
+  buildFileListForInput(mainMsi, allFiles) {
+    const dt = new DataTransfer();
+    for (const file of allFiles) {
+      if (file === mainMsi || file.name.toLowerCase().endsWith('.msi')) {
+        if (file === mainMsi) dt.items.add(file);
+      } else {
+        dt.items.add(file);
+      }
+    }
+    return dt.files;
+  }
+
   // Set up event listeners
   initEventListeners() {
     this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
@@ -108,6 +172,109 @@ class MSIViewer {
 
     // New file loading buttons
     this.loadExampleFileButton.addEventListener('click', this.handleLoadExampleFile.bind(this));
+
+    // Enhanced drag & drop: allow folders and multiple files, pick or prompt MSI
+    const container = document.querySelector('.file-input-container');
+    if (container) {
+      const setDragState = (active) => {
+        container.classList.toggle('dragover', active);
+      };
+
+      const getAsEntry = (item) => {
+        if (!item) return null;
+        if (typeof item.getAsEntry === 'function') return item.getAsEntry();
+        if (typeof item.webkitGetAsEntry === 'function') return item.webkitGetAsEntry();
+        return null;
+      };
+
+      const readAllEntries = async (directoryEntry) => {
+        const reader = directoryEntry.createReader();
+        const entries = [];
+        let batch;
+        do {
+          batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+          entries.push(...batch);
+        } while (batch.length > 0);
+        return entries;
+      };
+
+      const traverseEntry = async (entry) => {
+        if (entry.isFile) {
+          const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+          return [file];
+        }
+        if (entry.isDirectory) {
+          const files = [];
+          const children = await readAllEntries(entry);
+          for (const child of children) {
+            files.push(...await traverseEntry(child));
+          }
+          return files;
+        }
+        return [];
+      };
+
+      const collectFilesFromDataTransfer = async (dataTransfer) => {
+        if (!dataTransfer) return [];
+        if (dataTransfer.items && dataTransfer.items.length) {
+          const files = [];
+          for (const item of dataTransfer.items) {
+            const entry = getAsEntry(item);
+            if (entry) {
+              files.push(...await traverseEntry(entry));
+            } else if (item.kind === 'file') {
+              const file = item.getAsFile();
+              if (file) files.push(file);
+            }
+          }
+          if (files.length) return files;
+        }
+        return Array.from(dataTransfer.files || []);
+      };
+
+      const handleFilesSelection = async (files) => {
+        if (!files || !files.length) return;
+        const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
+
+        let chosenMsi = null;
+        if (msiFiles.length === 1) {
+          chosenMsi = msiFiles[0];
+        } else if (msiFiles.length > 1) {
+          chosenMsi = await this.promptForMsiSelection(msiFiles);
+          if (!chosenMsi) return; // user cancelled
+        }
+
+        const fileList = chosenMsi ? this.buildFileListForInput(chosenMsi, files) : files;
+        const dt = new DataTransfer();
+        for (const f of fileList) dt.items.add(f);
+        this.fileInput.files = dt.files;
+
+        const event = new Event('change', { bubbles: true });
+        this.fileInput.dispatchEvent(event);
+      };
+
+      container.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        setDragState(true);
+      });
+
+      container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        setDragState(true);
+      });
+
+      container.addEventListener('dragleave', (e) => {
+        if (e.relatedTarget && container.contains(e.relatedTarget)) return;
+        setDragState(false);
+      });
+
+      container.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        setDragState(false);
+        const files = await collectFilesFromDataTransfer(e.dataTransfer);
+        await handleFilesSelection(files);
+      });
+    }
   }
 
   // Switch between tabs
@@ -375,16 +542,29 @@ class MSIViewer {
 
     const files = Array.from(this.fileInput.files);
 
-    // Find the MSI file
-    const msiFile = files.find(f => f.name.toLowerCase().endsWith('.msi'));
-    if (!msiFile) {
+    // Find MSI files
+    const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
+    if (msiFiles.length === 0) {
       this.loadingIndicator.style.display = 'block';
       this.loadingIndicator.textContent = 'Error: No .msi file selected. Please select an MSI file.';
       return;
     }
 
-    // Get any additional files (e.g., .cab files)
-    const additionalFiles = files.filter(f => f !== msiFile);
+    let msiFile = null;
+    if (msiFiles.length === 1) {
+      msiFile = msiFiles[0];
+    } else {
+      msiFile = await this.promptForMsiSelection(msiFiles);
+      if (!msiFile) return; // user cancelled selection
+      // Rebuild FileList to keep chosen MSI + others (non-MSI)
+      const rebuilt = this.buildFileListForInput(msiFile, files);
+      const dt = new DataTransfer();
+      for (const f of Array.from(rebuilt)) dt.items.add(f);
+      this.fileInput.files = dt.files;
+    }
+
+    // Get any additional files (e.g., .cab files) excluding other MSIs
+    const additionalFiles = Array.from(this.fileInput.files).filter(f => f !== msiFile && !f.name.toLowerCase().endsWith('.msi'));
 
     // Check file sizes (warn if total > 500MB)
     const maxTotalSize = 500 * 1024 * 1024; // 500MB

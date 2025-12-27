@@ -19,7 +19,8 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
       </label>
     </div>
     <div style="margin-top: 0.3rem; font-size: 0.85em; color: #666; text-align: center;">
-      You can also select .cab files if the MSI references external cabinet files
+      You can also select .cab files if the MSI references external cabinet files<br>
+      (or drag and drop an entire folder with an MSI installer)
     </div>
     <div id="selected-files-info" style="display: none; margin-top: 0.5rem; font-size: 0.9em; color: #555;"></div>
     <div id="loading-indicator" style="display: none;">Loading...</div>
@@ -342,39 +343,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     box-shadow: none;
   }
 </style>
-<script>
-// filepath: pymsi/docs/msi_viewer.md (inline script)
-document.addEventListener('DOMContentLoaded', function () {
-  var fileInputContainer = document.querySelector('.file-input-container');
-  var fileInput = document.getElementById('msi-file-input');
-  if (!fileInputContainer || !fileInput) return;
 
-  // Make the label and container clickable and droppable everywhere
-  fileInputContainer.addEventListener('dragenter', function (e) {
-    e.preventDefault();
-    fileInputContainer.classList.add('dragover');
-  });
-  fileInputContainer.addEventListener('dragover', function (e) {
-    e.preventDefault();
-    fileInputContainer.classList.add('dragover');
-  });
-  fileInputContainer.addEventListener('dragleave', function (e) {
-    if (e.relatedTarget && fileInputContainer.contains(e.relatedTarget)) return;
-    fileInputContainer.classList.remove('dragover');
-  });
-  fileInputContainer.addEventListener('drop', function (e) {
-    e.preventDefault();
-    fileInputContainer.classList.remove('dragover');
-    // If files are dropped, set them on the input and trigger change
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      fileInput.files = e.dataTransfer.files;
-      // Trigger change event for compatibility
-      var event = new Event('change', { bubbles: true });
-      fileInput.dispatchEvent(event);
-    }
-  });
-});
-</script>
 
 <!-- Include the Pyodide script -->
 <script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
