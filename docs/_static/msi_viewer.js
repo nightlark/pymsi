@@ -750,7 +750,7 @@ class MSIViewer {
     try {
       // Get all stream names (including _StringPool and _StringData)
       const streamNames = await this.getAllStreamNames();
-      
+
       // Add _StringData and _StringPool as they are tables and won't appear in the regular stream list
       // but should be included in the stream extraction
       streamNames.push('_StringData');
@@ -781,7 +781,7 @@ class MSIViewer {
           this.pyodide.globals.set('current_stream_name', streamName);
           const streamData = await this.pyodide.runPythonAsync(`
             import pymsi.streamname
-            
+
             # Special streams like SummaryInformation, DigitalSignature, etc.
             # start with special characters and should not be encoded
             # Only table-like streams (_StringPool, _StringData) need encoding
@@ -801,7 +801,7 @@ class MSIViewer {
                   break
               if encoded_name is None:
                 raise ValueError(f"Stream '{current_stream_name}' not found in OLE structure")
-            
+
             # Read the stream using a context manager to ensure proper cleanup
             with current_package.ole.openstream(encoded_name) as stream:
               stream_data = stream.read()
@@ -821,7 +821,7 @@ class MSIViewer {
           } else {
             throw new Error(`Unexpected stream data type for ${streamName}`);
           }
-          
+
           // Add to ZIP with a safe filename
           zip.file(streamName, streamBytes);
         } catch (error) {
