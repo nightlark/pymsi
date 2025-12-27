@@ -783,8 +783,17 @@ class MSIViewer {
           to_js(stream_data)
         `);
 
-        // Convert to Uint8Array if needed
-        const streamBytes = streamData instanceof Uint8Array ? streamData : new Uint8Array(streamData);
+        // Convert to Uint8Array with proper type checking
+        let streamBytes;
+        if (streamData instanceof Uint8Array) {
+          streamBytes = streamData;
+        } else if (ArrayBuffer.isView(streamData) || streamData instanceof ArrayBuffer) {
+          streamBytes = new Uint8Array(streamData);
+        } else if (Array.isArray(streamData)) {
+          streamBytes = new Uint8Array(streamData);
+        } else {
+          throw new Error(`Unexpected stream data type for ${streamName}`);
+        }
         
         // Add to ZIP with a safe filename
         zip.file(streamName, streamBytes);

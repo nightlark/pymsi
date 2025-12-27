@@ -229,22 +229,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     border-bottom: 1px solid #ddd;
   }
 
-  #extract-button {
-    margin-bottom: 1rem;
-    padding: 0.5rem 1rem;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-    line-height: 1rem;
-    height: 2rem;
-  }
-
-  #extract-button:disabled {
-    background: #cccccc;
-    cursor: not-allowed;
-  }
-
+  #extract-button,
   #extract-streams-button {
     margin-bottom: 1rem;
     padding: 0.5rem 1rem;
@@ -256,6 +241,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     height: 2rem;
   }
 
+  #extract-button:disabled,
   #extract-streams-button:disabled {
     background: #cccccc;
     cursor: not-allowed;
