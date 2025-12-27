@@ -789,6 +789,8 @@ class MSIViewer {
             stream_data = stream.read()
           to_js(stream_data)
         `);
+        // Clean up the temporary global variable
+        this.pyodide.globals.delete('current_stream_name');
 
         // Convert to Uint8Array with proper type checking
         let streamBytes;
