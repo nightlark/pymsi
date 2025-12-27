@@ -21,6 +21,7 @@ class MSIViewer {
     this.currentFileDisplay = document.getElementById('current-file-display');
     this.selectedFilesInfo = document.getElementById('selected-files-info');
     this.extractButton = document.getElementById('extract-button');
+    this.extractStreamsButton = document.getElementById('extract-streams-button');
     this.exportTablesButton = document.getElementById('export-tables-button');
     this.exportFormatSelector = document.getElementById('export-format-selector');
     this.filesList = document.getElementById('files-list');
@@ -93,6 +94,7 @@ class MSIViewer {
   initEventListeners() {
     this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
     this.extractButton.addEventListener('click', this.extractFiles.bind(this));
+    this.extractStreamsButton.addEventListener('click', this.extractStreams.bind(this));
     this.exportTablesButton.addEventListener('click', this.exportTables.bind(this));
     this.tableSelector.addEventListener('change', this.loadTableData.bind(this));
 
@@ -235,6 +237,7 @@ class MSIViewer {
 
       // Enable the extract button and show current file
       this.extractButton.disabled = false;
+      this.extractStreamsButton.disabled = false;
       this.exportTablesButton.disabled = false;
       this.exportFormatSelector.disabled = false;
       this.currentFileDisplay.textContent = `Currently loaded: ${this.currentFileName}`;
@@ -611,9 +614,9 @@ class MSIViewer {
     this.summaryContent.appendChild(table);
   }
 
-  // Load streams information
-  async loadStreams() {
-    const streamsData = await this.pyodide.runPythonAsync(`
+  // Get all stream names (not tables)
+  async getAllStreamNames() {
+    const streamNames = await this.pyodide.runPythonAsync(`
       streams = []
       for k in current_package.ole.root.kids:
         name, is_table = pymsi.streamname.decode_unicode(k.name)
@@ -621,6 +624,12 @@ class MSIViewer {
           streams.append(name)
       to_js(streams)
     `);
+    return streamNames;
+  }
+
+  // Load streams information
+  async loadStreams() {
+    const streamsData = await this.getAllStreamNames();
     console.log('Streams data loaded:', streamsData);
 
     this.streamsContent.innerHTML = '';
@@ -730,6 +739,122 @@ class MSIViewer {
     } catch (error) {
       this.loadingIndicator.textContent = `Error extracting files: ${error.message}`;
       console.error('Error extracting files:', error);
+    }
+  }
+
+  // Extract all streams and create a ZIP for download
+  async extractStreams() {
+    this.loadingIndicator.style.display = 'block';
+    this.loadingIndicator.textContent = 'Extracting streams...';
+
+    try {
+      // Get all stream names (including _StringPool and _StringData)
+      const streamNames = await this.getAllStreamNames();
+
+      // Add _StringData and _StringPool as they are tables and won't appear in the regular stream list
+      // but should be included in the stream extraction
+      streamNames.push('_StringData');
+      streamNames.push('_StringPool');
+
+      if (streamNames.length === 0) {
+        this.loadingIndicator.textContent = 'No streams found';
+        setTimeout(() => {
+          this.loadingIndicator.style.display = 'none';
+        }, 2000);
+        return;
+      }
+
+      this.loadingIndicator.textContent = 'Creating ZIP archive...';
+
+      // Create ZIP file in JavaScript using JSZip library
+      if (typeof JSZip === 'undefined') {
+        throw new Error('JSZip failed to load.');
+      }
+
+      const zip = new JSZip();
+
+      // Extract each stream
+      for (const streamName of streamNames) {
+        try {
+          // Read the stream data using pymsi
+          // Store streamName in Python globals to avoid string injection
+          this.pyodide.globals.set('current_stream_name', streamName);
+          const streamData = await this.pyodide.runPythonAsync(`
+            import pymsi.streamname
+
+            # Special streams like SummaryInformation, DigitalSignature, etc.
+            # start with special characters and should not be encoded
+            # Only table-like streams (_StringPool, _StringData) need encoding
+            if current_stream_name.startswith('_'):
+              # Table streams need to be encoded
+              encoded_name = pymsi.streamname.encode_unicode(current_stream_name, True)
+            else:
+              # Non-table streams (like SummaryInformation) are already in the correct format
+              # They were decoded from the OLE structure, so we need to use the raw name
+              # from the OLE file directly
+              # Find the raw stream name in the OLE structure
+              encoded_name = None
+              for k in current_package.ole.root.kids:
+                decoded_name, is_table = pymsi.streamname.decode_unicode(k.name)
+                if decoded_name == current_stream_name:
+                  encoded_name = k.name
+                  break
+              if encoded_name is None:
+                raise ValueError(f"Stream '{current_stream_name}' not found in OLE structure")
+
+            # Read the stream using a context manager to ensure proper cleanup
+            with current_package.ole.openstream(encoded_name) as stream:
+              stream_data = stream.read()
+            to_js(stream_data)
+          `);
+          // Clean up the temporary global variable
+          this.pyodide.globals.delete('current_stream_name');
+
+          // Convert to Uint8Array with proper type checking
+          let streamBytes;
+          if (streamData instanceof Uint8Array) {
+            streamBytes = streamData;
+          } else if (ArrayBuffer.isView(streamData) || streamData instanceof ArrayBuffer) {
+            streamBytes = new Uint8Array(streamData);
+          } else if (Array.isArray(streamData)) {
+            streamBytes = new Uint8Array(streamData);
+          } else {
+            throw new Error(`Unexpected stream data type for ${streamName}`);
+          }
+
+          // Add to ZIP with a safe filename
+          zip.file(streamName, streamBytes);
+        } catch (error) {
+          console.error(`[DEBUG] Error extracting stream ${streamName}:`, error);
+          throw error; // Re-throw to stop extraction process
+        }
+      }
+
+      // Generate ZIP blob
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+      // Create filename based on MSI name
+      const baseFileName = this.currentFileName.replace(/\.msi$/i, '');
+      const zipFileName = `${baseFileName}_streams.zip`;
+
+      // Trigger download
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = zipFileName;
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up after download starts
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, this.DOWNLOAD_CLEANUP_DELAY_MS);
+
+      this.loadingIndicator.style.display = 'none';
+    } catch (error) {
+      this.loadingIndicator.textContent = `Error extracting streams: ${error.message}`;
+      console.error('Error extracting streams:', error);
     }
   }
 

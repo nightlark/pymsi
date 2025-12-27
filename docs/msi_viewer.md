@@ -83,6 +83,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
       </div>
       <div id="streams-tab" class="tab-pane">
         <h3>Streams</h3>
+        <button id="extract-streams-button" disabled>Extract All Streams (ZIP)</button>
         <div id="streams-content">
           <p class="empty-message">Select an MSI file to view streams</p>
         </div>
@@ -228,7 +229,8 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     border-bottom: 1px solid #ddd;
   }
 
-  #extract-button {
+  #extract-button,
+  #extract-streams-button {
     margin-bottom: 1rem;
     padding: 0.5rem 1rem;
     background: #4CAF50;
@@ -239,7 +241,8 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     height: 2rem;
   }
 
-  #extract-button:disabled {
+  #extract-button:disabled,
+  #extract-streams-button:disabled {
     background: #cccccc;
     cursor: not-allowed;
   }
