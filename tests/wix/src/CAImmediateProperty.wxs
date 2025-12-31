@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Common.wxi ?>
+
+  <Product Id="*" Name="CAImmediateProperty" Language="1033" Version="1.0.0" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MediaTemplate />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CAImmediate" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="Main" Title="Main" Level="1">
+      <ComponentRef Id="cmpPayload" />
+    </Feature>
+
+    <!-- Immediate property-set custom action (safe, no external execution) -->
+    <CustomAction Id="CA_SetProperty" Property="PYMSI_TEST_PROPERTY" Value="HelloFromImmediateCA" Execute="immediate" />
+
+    <InstallUISequence>
+      <Custom Action="CA_SetProperty" Before="CostFinalize">1</Custom>
+    </InstallUISequence>
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_SetProperty" Before="CostFinalize">1</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>

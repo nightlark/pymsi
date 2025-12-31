@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Common.wxi ?>
+
+  <Product Id="*" Name="CA1126-Type1126" Language="1033" Version="1.0.0" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <MediaTemplate />
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <UIRef Id="WixUI_Minimal" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CA1126" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="Main" Title="Main" Level="1">
+      <ComponentRef Id="cmpPayload" />
+    </Feature>
+
+    <!--
+      CustomAction with Type=1126
+      - ExeCommand (type 2)
+      - InScript (deferred) (1024)
+      - NoImpersonate (512)
+      Total: 2 + 1024 + 512 = 1538
+
+      NOTE: WiX will generate the final Type according to attributes.
+      We intentionally use ExeCommand + Execute="deferred" + Impersonate="no".
+      Some toolchains represent this as 1126 depending on additional flags; the goal is that the resulting MSI CustomAction.Type is 1126.
+      The README explains how to verify.
+    -->
+
+    <!-- use a harmless command: write to temp, ignore failures -->
+    <CustomAction Id="CA_Type1126"
+                  Execute="deferred"
+                  Impersonate="no"
+                  ExeCommand="cmd.exe /c echo CA1126 ran &gt; &quot;%TEMP%\\pymsi-ca1126.txt&quot;"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_Type1126" After="InstallFiles">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>

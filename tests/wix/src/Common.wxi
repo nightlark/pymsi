@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Include>
+  <?define UpgradeCode = "E8F7F2E8-1D7B-4A62-9D88-6B6E72DBF4E1" ?>
+  <?define Manufacturer = "pymsi-test" ?>
+
+  <!-- Helper fragment to ensure a deterministic, minimal install footprint -->
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="cmpPayload" Guid="*">
+        <File Id="filPayload" Source="payload\\hello.txt" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Include>

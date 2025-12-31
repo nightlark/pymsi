@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Common.wxi ?>
+
+  <Product Id="*" Name="CADllEntry" Language="1033" Version="1.0.0" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MediaTemplate />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CADll" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="Main" Title="Main" Level="1">
+      <ComponentRef Id="cmpPayload" />
+    </Feature>
+
+    <!--
+      DLL-entry custom action.
+      We embed a tiny native DLL as a Binary and call an exported entrypoint.
+      To keep this repo self-contained, we use a well-known system DLL entrypoint pattern by referencing a Binary that we ship.
+      The binary is a placeholder; build will succeed only if the binary exists.
+
+      If you prefer not to ship a DLL, you can delete this test.
+    -->
+
+    <Binary Id="Bin_TestCA" SourceFile="payload\\TestCA.dll" />
+    <CustomAction Id="CA_CallDll" BinaryKey="Bin_TestCA" DllEntry="DoNothing" Execute="immediate" Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_CallDll" After="InstallInitialize">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>

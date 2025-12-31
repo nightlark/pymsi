@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Common.wxi ?>
+
+  <Product Id="*" Name="CADeferredRollbackCommit" Language="1033" Version="1.0.0" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MediaTemplate />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CASeq" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="Main" Title="Main" Level="1">
+      <ComponentRef Id="cmpPayload" />
+    </Feature>
+
+    <!-- Use harmless cmd.exe echo into %TEMP% to illustrate sequence types -->
+    <CustomAction Id="CA_Deferred" Execute="deferred" Impersonate="yes" ExeCommand="cmd.exe /c echo deferred &gt; &quot;%TEMP%\\pymsi-deferred.txt&quot;" Return="ignore" />
+    <CustomAction Id="CA_Rollback" Execute="rollback" Impersonate="yes" ExeCommand="cmd.exe /c echo rollback &gt; &quot;%TEMP%\\pymsi-rollback.txt&quot;" Return="ignore" />
+    <CustomAction Id="CA_Commit" Execute="commit" Impersonate="yes" ExeCommand="cmd.exe /c echo commit &gt; &quot;%TEMP%\\pymsi-commit.txt&quot;" Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_Rollback" Before="CA_Deferred">NOT Installed</Custom>
+      <Custom Action="CA_Deferred" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="CA_Commit" After="CA_Deferred">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>
