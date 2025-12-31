@@ -22,21 +22,23 @@
 
     <!--
       CustomAction with Type=1126
-      - ExeCommand (type 2)
+      - Exe (type 2)
+      - Text data / command line (4)
+      - Directory source location (32)
+      - Continue (64)
       - InScript (deferred) (1024)
-      - NoImpersonate (512)
-      Total: 2 + 1024 + 512 = 1538
+      Total: 2 + 4 + 32 + 64 + 1024 = 1126
 
       NOTE: WiX will generate the final Type according to attributes.
-      We intentionally use ExeCommand + Execute="deferred" + Impersonate="no".
-      Some toolchains represent this as 1126 depending on additional flags; the goal is that the resulting MSI CustomAction.Type is 1126.
+      We intentionally use ExeCommand + Execute="deferred" + Impersonate="yes" + Return="ignore".
+      The goal is that the resulting MSI CustomAction.Type is 1126.
       The README explains how to verify.
     -->
 
     <!-- use a harmless command: write to temp, ignore failures -->
     <CustomAction Id="CA_Type1126"
                   Execute="deferred"
-                  Impersonate="no"
+                  Impersonate="yes"
                   ExeCommand="cmd.exe /c echo CA1126 ran &gt; &quot;%TEMP%\\pymsi-ca1126.txt&quot;"
                   Return="ignore" />
 

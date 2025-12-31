@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Common.wxi ?>
+
+  <Product Id="*" Name="CAVBScript" Language="1033" Version="1.0.0" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MediaTemplate />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CAVBScript" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="Main" Title="Main" Level="1">
+      <ComponentRef Id="cmpPayload" />
+    </Feature>
+
+    <!--
+      VBScript custom actions with different sources:
+      1. Script embedded in Binary table (Type 6: VBScript from Binary)
+      2. Script inline in CustomAction table (Type 38: VBScript from Directory/Text)
+      3. Script referenced via property (Type 54: VBScript from Property)
+      
+      Type breakdown:
+      - 6 = VBScript (0x06)
+      - 38 = VBScript (6) + Directory source (32)
+      - 54 = VBScript (6) + Property source (48)
+    -->
+
+    <!-- VBScript from Binary table (Type 6) -->
+    <Binary Id="Bin_TestVBS" SourceFile="payload\\test.vbs" />
+    <CustomAction Id="CA_VBS_Binary"
+                  BinaryKey="Bin_TestVBS"
+                  VBScriptCall=""
+                  Execute="immediate"
+                  Return="ignore" />
+
+    <!-- VBScript inline in Source column (Type 38) -->
+    <CustomAction Id="CA_VBS_Inline"
+                  Script="vbscript"
+                  Execute="immediate"
+                  Return="ignore">
+      <![CDATA[
+        ' Simple VBScript inline
+        Dim msg
+        msg = "VBScript inline test"
+        ' Session.Message would work in real MSI
+      ]]>
+    </CustomAction>
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_VBS_Binary" After="InstallInitialize">NOT Installed</Custom>
+      <Custom Action="CA_VBS_Inline" After="CA_VBS_Binary">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>
