@@ -5,8 +5,10 @@ This test module validates that pymsi can correctly read and interpret
 CustomAction table entries, including various type flag combinations.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 import pymsi
 
 
