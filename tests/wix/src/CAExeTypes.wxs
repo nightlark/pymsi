@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Common.wxi ?>
+
+  <Product Id="*" Name="CAExeTypes" Language="1033" Version="1.0.0" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MediaTemplate />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CAExe" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="Main" Title="Main" Level="1">
+      <ComponentRef Id="cmpPayload" />
+    </Feature>
+
+    <!--
+      Various EXE custom action types:
+      - EXE from Binary table (Type 2)
+      - DLL from Binary table with entry point (Type 1)
+    -->
+
+    <!-- EXE from Binary table (Type 2) -->
+    <Binary Id="Bin_DoNothingExe" SourceFile="payload\\DoNothing.exe" />
+    <CustomAction Id="CA_Exe_Binary"
+                  BinaryKey="Bin_DoNothingExe"
+                  Execute="immediate"
+                  Return="ignore" />
+
+    <!-- DLL with entry point from Binary table (Type 1) -->
+    <Binary Id="Bin_DoNothingDll" SourceFile="payload\\DoNothing.dll" />
+    <CustomAction Id="CA_Dll_Binary"
+                  BinaryKey="Bin_DoNothingDll"
+                  DllEntry="DoNothing"
+                  Execute="immediate"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_Exe_Binary" After="InstallInitialize">NOT Installed</Custom>
+      <Custom Action="CA_Dll_Binary" After="CA_Exe_Binary">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Common.wxi ?>
+
+  <Product Id="*" Name="CAJScript" Language="1033" Version="1.0.0" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MediaTemplate />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="CAJScript" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="Main" Title="Main" Level="1">
+      <ComponentRef Id="cmpPayload" />
+    </Feature>
+
+    <!--
+      JScript custom actions with different sources:
+      1. Script embedded in Binary table (Type 22: JScript from Binary)
+      2. Script inline in CustomAction table (Type 54: JScript from Directory/Text)
+      
+      Type breakdown:
+      - 22 = JScript (0x16 = 16 + 6, but actually 22 = 2 + 4 + 16)
+      - 54 = JScript (22) + Directory source (32)
+    -->
+
+    <!-- JScript from Binary table -->
+    <Binary Id="Bin_TestJS" SourceFile="payload\\test.js" />
+    <CustomAction Id="CA_JS_Binary"
+                  BinaryKey="Bin_TestJS"
+                  JScriptCall=""
+                  Execute="immediate"
+                  Return="ignore" />
+
+    <!-- JScript inline in Source column -->
+    <CustomAction Id="CA_JS_Inline"
+                  Script="jscript"
+                  Execute="immediate"
+                  Return="ignore">
+      <![CDATA[
+        // Simple JScript inline
+        var msg = "JScript inline test";
+        // Session.Message would work in real MSI
+      ]]>
+    </CustomAction>
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_JS_Binary" After="InstallInitialize">NOT Installed</Custom>
+      <Custom Action="CA_JS_Inline" After="CA_JS_Binary">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>

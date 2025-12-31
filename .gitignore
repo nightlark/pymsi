@@ -250,6 +250,11 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
+# WiX build outputs
+tests/wix/out/
+tests/wix/obj/
+tests/wix/_dark/
+
 # Windows shortcuts
 *.lnk
 
