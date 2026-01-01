@@ -8,13 +8,13 @@
 
 project = "pymsi"
 # pylint: disable-next=redefined-builtin
-copyright = "2024, Lawrence Livermore National Security"
+copyright = "2026, Lawrence Livermore National Security"
 author = "Ryan Mast"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["myst_parser"]
+extensions = ["myst_parser", "sphinx_copybutton"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -22,17 +22,26 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
+html_theme = "furo"
 html_theme_options = {
     "description": "pymsi",
-    "github_user": "nightlark",
-    "github_repo": "pymsi",
-    "github_button": "true",
-    "github_banner": "true",
-    "badge_branch": "main",
-    "fixed_sidebar": "false",
+    # This adds a "Edit this page" / "View source" link to the top right
+    "source_repository": "https://github.com/nightlark/pymsi/",
+    "source_branch": "main",
+    "source_directory": "docs/",
 }
 # html_logo = "./logos/pymsi-logo.png"
 # html_favicon = html_logo
-html_sidebars = {"**": ["globaltoc.html", "relations.html", "searchbox.html"]}
+html_sidebars = {
+    "**": [
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
+        "sidebar/navigation.html",
+        "sidebar/ethical-ads.html",
+        "sidebar/scroll-end.html",
+        "github-star.html",
+        "sidebar/variant-selector.html",
+    ]
+}
 html_static_path = ["_static"]

@@ -98,14 +98,70 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     max-width: 100%;
     margin: 0 auto;
+    color: var(--msi-foreground);
+    background: var(--msi-bg);
+    --msi-bg: var(--color-background-primary, #ffffff);
+    --msi-surface: var(--color-background-secondary, #f6f7fb);
+    --msi-border: var(--color-background-border, #d5d8de);
+    --msi-foreground: var(--color-foreground-primary, #1f2933);
+    --msi-muted: var(--color-foreground-muted, #4b5563);
+    --msi-accent: var(--color-brand-content, var(--color-link, #0066cc));
+    --msi-accent-strong: var(--color-brand-primary, var(--color-link-hover, #0051a8));
+    --msi-accent-border: #9bc4f5;
+    --msi-accent-shadow: rgba(0, 102, 204, 0.18);
+    --msi-overlay: var(--color-background-hover, #eef2f7);
+    --msi-success: var(--color-success, #4caf50);
+    --msi-success-muted: rgba(76, 175, 80, 0.16);
+    --msi-disabled-surface: #eef1f5;
+    --msi-accent-disabled: #dceaff;
+    --msi-button-text: #ffffff;
+  }
+
+  html[data-theme="dark"] #msi-viewer-app,
+  body[data-theme="dark"] #msi-viewer-app {
+    --msi-bg: var(--color-background-primary, #0f1115);
+    --msi-surface: var(--color-background-secondary, #161a1f);
+    --msi-border: var(--color-background-border, #2f3640);
+    --msi-foreground: var(--color-foreground-primary, #e5e7eb);
+    --msi-muted: var(--color-foreground-muted, #a0aec0);
+    --msi-accent: var(--color-brand-content, var(--color-link, #7aa2f7));
+    --msi-accent-strong: var(--color-brand-primary, var(--color-link-hover, #9bb4ff));
+    --msi-accent-border: #4c6fbf;
+    --msi-accent-shadow: rgba(122, 162, 247, 0.2);
+    --msi-overlay: var(--color-background-hover, #1f2937);
+    --msi-success: var(--color-success, #67e480);
+    --msi-success-muted: rgba(103, 228, 128, 0.2);
+    --msi-disabled-surface: #1a1e26;
+    --msi-accent-disabled: rgba(122, 162, 247, 0.22);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) #msi-viewer-app,
+    body:not([data-theme="light"]) #msi-viewer-app {
+      --msi-bg: var(--color-background-primary, #0f1115);
+      --msi-surface: var(--color-background-secondary, #161a1f);
+      --msi-border: var(--color-background-border, #2f3640);
+      --msi-foreground: var(--color-foreground-primary, #e5e7eb);
+      --msi-muted: var(--color-foreground-muted, #a0aec0);
+      --msi-accent: var(--color-brand-content, var(--color-link, #7aa2f7));
+      --msi-accent-strong: var(--color-brand-primary, var(--color-link-hover, #9bb4ff));
+      --msi-accent-border: #4c6fbf;
+      --msi-accent-shadow: rgba(122, 162, 247, 0.2);
+      --msi-overlay: var(--color-background-hover, #1f2937);
+      --msi-success: var(--color-success, #67e480);
+      --msi-success-muted: rgba(103, 228, 128, 0.2);
+      --msi-disabled-surface: #1a1e26;
+      --msi-accent-disabled: rgba(122, 162, 247, 0.22);
+    }
   }
 
   .file-selector {
     text-align: center;
     padding: 2rem;
-    background: #f9f9f9;
+    background: var(--msi-surface);
     border-radius: 8px;
     margin-bottom: 2rem;
+    border: 1px solid var(--msi-border);
   }
 
   .file-input-container {
@@ -116,10 +172,10 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   }
 
   .file-input-container.dragover .file-input-label {
-    background: #005a9e;
-    color: #e3f2fd;
-    border: 2px solid #90caf9;
-    box-shadow: 0 2px 16px 0 rgba(0, 122, 204, 0.22);
+    background: var(--msi-accent-strong);
+    color: var(--msi-bg);
+    border: 2px solid var(--msi-accent-border);
+    box-shadow: 0 2px 16px 0 var(--msi-accent-shadow);
   }
 
   #msi-file-input {
@@ -139,8 +195,8 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: #007acc;
-    color: white;
+    background: var(--msi-accent);
+    color: var(--msi-bg);
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
@@ -159,59 +215,69 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   .file-input-label:hover,
   .file-input-container:hover .file-input-label,
   .file-input-label:focus-within {
-    background: #005a9e;
-    color: #e3f2fd;
-    border: 2px solid #90caf9;
-    box-shadow: 0 2px 12px 0 rgba(0, 122, 204, 0.18);
+    filter: brightness(90%);
+    color: var(--msi-bg);
+    border: 2px solid var(--msi-accent-border);
+    box-shadow: 0 2px 12px 0 var(--msi-accent-shadow);
     outline: none;
   }
 
   #loading-indicator {
     margin-top: 1rem;
     padding: 0.5rem;
-    background: #e3f2fd;
-    border: 1px solid #90caf9;
+    background: var(--msi-overlay);
+    border: 1px solid var(--msi-border);
     border-radius: 4px;
-    color: #1565c0;
+    color: var(--msi-accent);
     font-weight: 500;
   }
 
   #current-file-display {
     margin-bottom: 1rem;
     padding: 0.5rem 1rem;
-    background: #f0f8ff;
-    border: 1px solid #b0d4f1;
+    background: var(--msi-overlay);
+    border: 1px solid var(--msi-border);
     border-radius: 4px;
-    color: #2c5282;
+    color: var(--msi-foreground);
     font-weight: 500;
     text-align: center;
   }
 
   .tabs {
     display: flex;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #ddd;
+    margin-bottom: 0rem;
+    border-bottom: 1px solid var(--msi-border);
   }
 
   .tab-button {
-    background: #f5f5f5;
-    border: 1px solid #ddd;
+    background: var(--msi-overlay);
+    border: 1px solid var(--msi-border);
     border-bottom: none;
     padding: 0.5rem 1rem;
     margin-right: 0.25rem;
     cursor: pointer;
+    color: var(--msi-foreground);
+    font-weight: 500;
   }
 
   .tab-button.active {
-    background: white;
-    border-bottom: 1px solid white;
+    background: var(--msi-bg);
+    border-bottom: 1px solid var(--msi-bg);
     margin-bottom: -1px;
+    color: var(--msi-accent-strong);
+    box-shadow: inset 0 -2px 0 var(--msi-accent-strong);
+  }
+
+  .tab-button:not(.active):hover {
+    background: var(--msi-surface);
+    color: var(--msi-accent);
+    border-color: var(--msi-border);
   }
 
   .tab-pane {
     display: none;
     padding: 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--msi-border);
     border-top: none;
   }
 
@@ -227,7 +293,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   th, td {
     text-align: left;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--msi-border);
   }
 
   th.sortable {
@@ -241,7 +307,7 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
     content: attr(data-sort-indicator);
     display: inline-block;
     font-size: 0.8em;
-    color: #666;
+    color: var(--msi-muted);
     margin-left: 0.35rem;
     width: 1em; /* fixed width to avoid layout shift */
   }
@@ -250,8 +316,8 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   #extract-streams-button {
     margin-bottom: 1rem;
     padding: 0.5rem 1rem;
-    background: #4CAF50;
-    color: white;
+    background: var(--msi-accent);
+    color: var(--msi-bg);
     border: none;
     cursor: pointer;
     line-height: 1rem;
@@ -260,8 +326,9 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 
   #extract-button:disabled,
   #extract-streams-button:disabled {
-    background: #cccccc;
-    cursor: not-allowed;
+  background: var(--msi-accent-disabled);
+  color: var(--msi-muted);
+  cursor: not-allowed;
   }
 
   .export-controls {
@@ -274,8 +341,8 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   #export-tables-button {
     margin-bottom: 0;
     padding: 0.5rem 1rem;
-    background: #4CAF50;
-    color: white;
+    background: var(--msi-accent);
+    color: var(--msi-bg);
     border: none;
     line-height: 1rem;
     height: 2rem;
@@ -286,8 +353,21 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   }
 
   #export-tables-button:disabled {
-    background: #cccccc;
+    background: var(--msi-accent-disabled);
+    color: var(--msi-muted);
     cursor: not-allowed;
+  }
+
+  #extract-button:hover:not(:disabled),
+  #extract-streams-button:hover:not(:disabled),
+  #export-tables-button:hover:not(:disabled) {
+    filter: brightness(90%);
+  }
+
+  #table-selector,
+  #export-format-selector {
+    background-color: var(--msi-bg);
+    color: var(--msi-foreground);
   }
 
   #export-format-selector {
@@ -297,13 +377,13 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   }
 
   #export-format-selector:disabled {
-    background: #f0f0f0;
+    background: var(--msi-surface);
     cursor: not-allowed;
   }
 
   .empty-message {
     text-align: center;
-    color: #666;
+    color: var(--msi-muted);
     font-style: italic;
     padding: 2rem;
   }
@@ -311,15 +391,15 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   #files-list-container, #table-viewer-container {
     max-height: 500px;
     overflow-y: auto;
-    border: 1px solid #ddd;
+    border: 1px solid var(--msi-border);
   }
 
   .example-file-btn {
     font-size: 0.95em;
     padding: 0.3em 0.9em;
-    background: #f5f5f5;
-    color: #007acc;
-    border: 1px solid #b0d4f1;
+    background: var(--msi-surface);
+    color: var(--msi-accent);
+    border: 1px solid var(--msi-accent-border);
     border-radius: 4px;
     cursor: pointer;
     margin-bottom: 0.5rem;
@@ -328,15 +408,15 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   }
   .example-file-btn:hover,
   .example-file-btn:focus {
-    background: #e3f2fd;
-    color: #005a9e;
-    border-color: #90caf9;
+    background: rgba(0, 102, 204, 0.1);
+    color: var(--msi-accent-strong);
+    border-color: var(--msi-accent-border);
     outline: none;
   }
   .example-file-btn:disabled {
-    background: #e0e0e0;
-    color: #9e9e9e;
-    border-color: #cccccc;
+    background: var(--msi-accent-disabled);
+    color: var(--msi-muted);
+    border-color: var(--msi-accent-border);
     cursor: not-allowed;
   }
 
@@ -345,17 +425,18 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
   }
 
   #msi-file-input:disabled ~ .file-input-label {
-    background: #cccccc;
-    color: #666666;
+    background: var(--msi-accent-disabled);
+    color: var(--msi-muted);
     cursor: not-allowed;
-    border-color: #999999;
+    border-color: var(--msi-accent-border);
+    box-shadow: none;
   }
 
   #msi-file-input:disabled ~ .file-input-label:hover,
   .file-input-container:hover #msi-file-input:disabled ~ .file-input-label {
-    background: #cccccc;
-    color: #666666;
-    border-color: #999999;
+    background: var(--msi-accent-disabled);
+    color: var(--msi-muted);
+    border-color: var(--msi-accent-border);
     box-shadow: none;
   }
 </style>

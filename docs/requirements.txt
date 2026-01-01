@@ -1,5 +1,7 @@
 sphinx
 myst-parser
+furo==2025.12.19
+sphinx-copybutton==0.5.2
 #sphinx_rtd_theme==1.0.0
 #ipython==7.31.1
 #ipykernel==6.4.2
