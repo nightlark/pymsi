@@ -24,13 +24,14 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
 html_theme_options = {
-    "description": "pymsi",
     # This adds a "Edit this page" / "View source" link to the top right
     "source_repository": "https://github.com/nightlark/pymsi/",
     "source_branch": "main",
     "source_directory": "docs/",
+    "sidebar_hide_name": True,
 }
-# html_logo = "./logos/pymsi-logo.png"
+html_title = "pymsi"
+html_logo = "./logos/pymsi_logo_with_text_transparent_600px_lossy.webp"
 # html_favicon = html_logo
 html_sidebars = {
     "**": [

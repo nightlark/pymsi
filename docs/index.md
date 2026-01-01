@@ -29,7 +29,7 @@ maxdepth: 2
 includehidden:
 ---
 
-self
+Overview <self>
 msi_viewer
 ```
 

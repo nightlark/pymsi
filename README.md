@@ -1,3 +1,7 @@
+<p align="center">
+    <img alt="pymsi logo" src="docs/logos/pymsi_logo_with_text_transparent_600px_lossy.webp" width="400px">
+</p>
+
 # pymsi
 
 [![PyPI](https://img.shields.io/pypi/v/python-msi)](https://pypi.org/project/python-msi/)
