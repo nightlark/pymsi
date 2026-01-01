@@ -1,7 +1,7 @@
 # pymsi
 
 [![PyPI](https://img.shields.io/pypi/v/python-msi)](https://pypi.org/project/python-msi/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/python-msi)](https://pypi.org/project/python-msi/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/python_msi)](https://pypi.org/project/python-msi/)
 [![MIT License](https://img.shields.io/pypi/l/python-msi.svg)](https://github.com/nightlark/pymsi/blob/main/LICENSE)
 [![Python Versions](https://img.shields.io/pypi/pyversions/python-msi.svg)](https://pypi.org/project/python-msi/)
 
