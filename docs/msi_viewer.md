@@ -226,8 +226,24 @@ Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) us
 
   th, td {
     text-align: left;
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
     border-bottom: 1px solid #ddd;
+  }
+
+  th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    padding-right: 1.6rem; /* reserve space for sort glyph */
+  }
+
+  th.sortable::after {
+    content: attr(data-sort-indicator);
+    display: inline-block;
+    font-size: 0.8em;
+    color: #666;
+    margin-left: 0.35rem;
+    width: 1em; /* fixed width to avoid layout shift */
   }
 
   #extract-button,

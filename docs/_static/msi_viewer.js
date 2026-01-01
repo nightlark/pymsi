@@ -154,6 +154,46 @@ class MSIViewer {
     return dt.files;
   }
 
+  // ----- Table utilities: sorting and resizing -----
+  enhanceTable(table) {
+    if (!table) return;
+    this.makeTableSortable(table);
+  }
+
+  makeTableSortable(table) {
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    if (!thead || !tbody) return;
+
+    const ths = Array.from(thead.querySelectorAll('th'));
+    ths.forEach((th, index) => {
+      th.classList.add('sortable');
+      th.dataset.sortIndicator = '';
+      th.onclick = () => {
+        const current = th.dataset.sortDir === 'asc' ? 'asc' : th.dataset.sortDir === 'desc' ? 'desc' : null;
+        const nextDir = current === 'asc' ? 'desc' : 'asc';
+        ths.forEach(h => { h.dataset.sortDir = ''; h.dataset.sortIndicator = ''; });
+        th.dataset.sortDir = nextDir;
+  th.dataset.sortIndicator = nextDir === 'asc' ? '▲' : '▼';
+
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const comparator = (a, b) => {
+          const av = (a.children[index]?.textContent || '').trim();
+          const bv = (b.children[index]?.textContent || '').trim();
+          const an = parseFloat(av.replace(/,/g, ''));
+          const bn = parseFloat(bv.replace(/,/g, ''));
+          const aNum = !isNaN(an) && av !== '';
+          const bNum = !isNaN(bn) && bv !== '';
+          if (aNum && bNum) {
+            return nextDir === 'asc' ? an - bn : bn - an;
+          }
+          return nextDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+        };
+        rows.sort(comparator).forEach(r => tbody.appendChild(r));
+      };
+    });
+  }
+
   // Set up event listeners
   initEventListeners() {
     this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
@@ -655,6 +695,8 @@ class MSIViewer {
       `;
       this.filesList.appendChild(row);
     }
+
+    this.enhanceTable(document.getElementById('files-table'));
   }
 
   // Load tables list
@@ -741,6 +783,8 @@ class MSIViewer {
 
       this.tableContent.appendChild(row);
     }
+
+    this.enhanceTable(document.getElementById('table-viewer'));
   }
 
   // Load summary information
