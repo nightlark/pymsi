@@ -501,9 +501,12 @@ class MSIViewer {
         // Handle various error formats (ValueError, FileNotFoundError, etc.)
         const missingFileName = this.extractMissingCabFileName(errorMessage);
 
-        if (missingFileName) {
+        // Remove leading forward slash
+        const cleanedMissingFileName = missingFileName.startsWith('/') ? missingFileName.substring(1) : missingFileName;
+
+        if (cleanedMissingFileName) {
           // Prompt user to select the missing file
-          const shouldPrompt = await this.promptForMissingCabFile(missingFileName);
+          const shouldPrompt = await this.promptForMissingCabFile(cleanedMissingFileName);
           if (shouldPrompt) {
             return; // Exit early, the prompt will handle retry
           }
@@ -587,6 +590,15 @@ class MSIViewer {
 
           // Determine the path for the cab file using utility function
           const cabPath = this.normalizePath(missingFileName);
+
+          // Check that missing file name matches selected file name
+          if (file.name !== missingFileName && !file.name.endsWith(missingFileName)) {
+            // Check with the user if they are sure the file they selected is correct before continuing
+            const confirmProceed = confirm(`The selected file "${file.name}" does not match the expected missing file name "${missingFileName}". Are you sure you want to proceed with this file?`);
+            if (!confirmProceed) {
+              return;
+            }
+          }
 
           // Add to additional files and retry loading
           const newAdditionalFiles = this.lastAdditionalFiles ? [...this.lastAdditionalFiles] : [];
