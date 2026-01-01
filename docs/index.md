@@ -9,7 +9,7 @@ A pure Python library and utilities for reading and manipulating Windows Install
 
 To get started `pip install python-msi`. To use it as a library, `import pymsi`. For the CLI utility, run `pymsi help` for a list of supported commands.
 
-Want to give it a try without installing anything? Check out [MSI file viewer](msi_viewer.md), which uses pymsi to view MSI files entirely client-side in your browser via Pyodide.
+Want to give it a try without installing anything? Check out the [MSI file viewer](msi_viewer.md), which uses pymsi to view MSI files entirely client-side in your browser via Pyodide.
 
 Here are some links to pages that may be useful:
 

@@ -6,13 +6,13 @@ hide-toc: true
 
 This interactive tool allows you to view the contents of MSI installer files directly in your browser. The processing happens *entirely on your device* - no files are uploaded to any server.
 
-Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) using Pyodide.
+Behind the scenes, it is running [pymsi](https://github.com/nightlark/pymsi/) [![PyPI - Downloads](https://img.shields.io/pypi/dm/python-msi)](https://pypi.org/project/python-msi/) using Pyodide.
 
-Like this tool?
+Like this tool and want to help out?
 
 * Star the repo to support development: [nightlark/pymsi](https://github.com/nightlark/pymsi)
-* Found a bug or got a feature idea? [Open an issue](https://github.com/nightlark/pymsi/issues) or [start a discussion](https://github.com/nightlark/pymsi/discussions)!
-* Share this page
+* Found a weird corner case or got feature ideas? [Open an issue](https://github.com/nightlark/pymsi/issues), [start a discussion](https://github.com/nightlark/pymsi/discussions), or [contribute](https://github.com/nightlark/pymsi/blob/main/CONTRIBUTING.md)!
+* Share this page with coworkers or friends!
 
 <div id="msi-viewer-app">
   <div class="file-selector">
