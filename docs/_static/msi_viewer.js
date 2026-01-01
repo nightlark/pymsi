@@ -158,6 +158,8 @@ class MSIViewer {
   enhanceTable(table) {
     if (!table) return;
     this.makeTableSortable(table);
+    // Making the table resizable has some UI quirks, so it's disabled for now
+    //this.makeTableResizable(table);
   }
 
   makeTableSortable(table) {
@@ -191,6 +193,42 @@ class MSIViewer {
         };
         rows.sort(comparator).forEach(r => tbody.appendChild(r));
       };
+    });
+  }
+
+  // This has quirks and is disabled for now
+  makeTableResizable(table) {
+    const ths = table.querySelectorAll('th');
+    if (!ths.length) return;
+    table.style.tableLayout = 'fixed';
+
+    ths.forEach((th) => {
+      th.querySelectorAll('.col-resizer').forEach(r => r.remove());
+      const resizer = document.createElement('div');
+      resizer.className = 'col-resizer';
+      th.appendChild(resizer);
+
+      let startX = 0;
+      let startWidth = 0;
+
+      const onMouseMove = (e) => {
+        const delta = e.clientX - startX;
+        const newWidth = Math.max(40, startWidth + delta);
+        th.style.width = `${newWidth}px`;
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        startX = e.clientX;
+        startWidth = th.offsetWidth;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
     });
   }
 
