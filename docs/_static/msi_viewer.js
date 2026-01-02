@@ -251,7 +251,7 @@ class MSIViewer {
 
     // New file loading buttons
     this.loadExampleFileButton.addEventListener('click', this.handleLoadExampleFile.bind(this));
-    
+
     if (this.fullscreenToggle) {
       this.fullscreenToggle.addEventListener('click', this.toggleFullscreen.bind(this));
     }
@@ -364,7 +364,7 @@ class MSIViewer {
   toggleFullscreen() {
     const app = document.getElementById('msi-viewer-app');
     const isFullscreen = app.classList.contains('fullscreen-mode');
-    
+
     if (!isFullscreen) {
       // Enter fullscreen
       // Create a placeholder to keep the spot in the document flow
@@ -372,11 +372,11 @@ class MSIViewer {
       this.placeholder.id = 'msi-viewer-placeholder';
       this.placeholder.style.display = 'none';
       app.parentNode.insertBefore(this.placeholder, app);
-      
+
       // Move app to body to break out of any container constraints
       document.body.appendChild(app);
       app.classList.add('fullscreen-mode');
-      
+
       // Update button text/icon
       this.fullscreenToggle.innerHTML = '<span class="icon">✕</span> Exit Fullscreen';
     } else {
@@ -387,9 +387,9 @@ class MSIViewer {
         this.placeholder.remove();
         this.placeholder = null;
       }
-      
+
       app.classList.remove('fullscreen-mode');
-      
+
       // Update button text/icon
       this.fullscreenToggle.innerHTML = '<span class="icon">⛶</span> Fullscreen';
     }
