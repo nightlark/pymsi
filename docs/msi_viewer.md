@@ -155,6 +155,9 @@ Like this tool and want to help out?
     display: flex;
     justify-content: flex-end;
     margin-bottom: 0.5rem;
+    max-width: 850px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .toolbar-btn {
@@ -221,6 +224,9 @@ Like this tool and want to help out?
     border-radius: 8px;
     margin-bottom: 2rem;
     border: 1px solid var(--msi-border);
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .file-input-container {
@@ -300,6 +306,12 @@ Like this tool and want to help out?
     color: var(--msi-foreground);
     font-weight: 500;
     text-align: center;
+  }
+
+  .msi-content {
+    width: min(95vw, 1920px);
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .tabs {
