@@ -33,6 +33,7 @@ class MSIViewer {
     this.tabButtons = document.querySelectorAll('.tab-button');
     this.tabPanes = document.querySelectorAll('.tab-pane');
     this.loadExampleFileButton = document.getElementById('load-example-file-button');
+    this.fullscreenToggle = document.getElementById('fullscreen-toggle');
 
     // Constants
     this.MAX_ERROR_DISPLAY_LENGTH = 500;
@@ -250,6 +251,10 @@ class MSIViewer {
 
     // New file loading buttons
     this.loadExampleFileButton.addEventListener('click', this.handleLoadExampleFile.bind(this));
+    
+    if (this.fullscreenToggle) {
+      this.fullscreenToggle.addEventListener('click', this.toggleFullscreen.bind(this));
+    }
 
     // Enhanced drag & drop: allow folders and multiple files, pick or prompt MSI
     const container = document.querySelector('.file-input-container');
@@ -352,6 +357,41 @@ class MSIViewer {
         const files = await collectFilesFromDataTransfer(e.dataTransfer);
         await handleFilesSelection(files);
       });
+    }
+  }
+
+  // Toggle fullscreen mode
+  toggleFullscreen() {
+    const app = document.getElementById('msi-viewer-app');
+    const isFullscreen = app.classList.contains('fullscreen-mode');
+    
+    if (!isFullscreen) {
+      // Enter fullscreen
+      // Create a placeholder to keep the spot in the document flow
+      this.placeholder = document.createElement('div');
+      this.placeholder.id = 'msi-viewer-placeholder';
+      this.placeholder.style.display = 'none';
+      app.parentNode.insertBefore(this.placeholder, app);
+      
+      // Move app to body to break out of any container constraints
+      document.body.appendChild(app);
+      app.classList.add('fullscreen-mode');
+      
+      // Update button text/icon
+      this.fullscreenToggle.innerHTML = '<span class="icon">✕</span> Exit Fullscreen';
+    } else {
+      // Exit fullscreen
+      // Move app back to placeholder location
+      if (this.placeholder && this.placeholder.parentNode) {
+        this.placeholder.parentNode.insertBefore(app, this.placeholder);
+        this.placeholder.remove();
+        this.placeholder = null;
+      }
+      
+      app.classList.remove('fullscreen-mode');
+      
+      // Update button text/icon
+      this.fullscreenToggle.innerHTML = '<span class="icon">⛶</span> Fullscreen';
     }
   }
 

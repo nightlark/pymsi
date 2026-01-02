@@ -23,6 +23,11 @@ Like this tool and want to help out?
 * Share this page with coworkers or friends!
 
 <div id="msi-viewer-app">
+  <div class="toolbar">
+    <button id="fullscreen-toggle" type="button" class="toolbar-btn">
+      <span class="icon">⛶</span> Fullscreen
+    </button>
+  </div>
   <div class="file-selector">
     <div style="margin-bottom: 1rem;">
       <button id="load-example-file-button" type="button" class="example-file-btn" disabled>Load example file</button>
@@ -131,6 +136,44 @@ Like this tool and want to help out?
     --msi-disabled-surface: #eef1f5;
     --msi-accent-disabled: #dceaff;
     --msi-button-text: #ffffff;
+  }
+
+  #msi-viewer-app.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    background: var(--msi-bg);
+    padding: 2rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+  }
+
+  .toolbar-btn {
+    background: transparent;
+    border: 1px solid var(--msi-border);
+    color: var(--msi-foreground);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .toolbar-btn:hover {
+    background: var(--msi-surface);
+    color: var(--msi-accent);
+    border-color: var(--msi-accent);
   }
 
   html[data-theme="dark"] #msi-viewer-app,
