@@ -14,7 +14,7 @@ author = "Ryan Mast"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["myst_parser", "sphinx_copybutton"]
+extensions = ["myst_parser", "sphinx_copybutton", "sphinxext.opengraph"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -46,3 +46,7 @@ html_sidebars = {
     ]
 }
 html_static_path = ["_static"]
+
+ogp_site_url = "https://pymsi.readthedocs.io/"
+ogp_image = "https://pymsi.readthedocs.io/en/latest/_static/pymsi_social_preview.jpg"
+ogp_description_length = 200

@@ -1,5 +1,13 @@
 ---
 hide-toc: true
+html_meta:
+  description: Inspect Windows MSI installer files in your browser (no uploads). View summary metadata, tables/streams and extract files.
+  keywords: MSI, Windows Installer, pymsi, Pyodide
+  property=og:title: MSI Viewer & Extractor (pymsi)
+  property=og:description: Inspect Windows MSI installer files in your browser (no uploads). View summary metadata, tables/streams and extract files.
+  twitter:card: summary_large_image
+  twitter:description: Inspect Windows MSI installer files in your browser (no uploads). View summary metadata, tables/streams and extract files.
+  twitter:site: rmast
 ---
 
 # MSI Viewer and Extractor

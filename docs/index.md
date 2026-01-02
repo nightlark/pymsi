@@ -1,3 +1,9 @@
+---
+html_meta:
+  property=og:title: Overview (pymsi)
+  property=og:description: Pure Python library/utility for reading, parsing, and extracting the contents of Windows installer (.msi) files on any platform
+---
+
 # pymsi
 
 [![PyPI](https://img.shields.io/pypi/v/python-msi)](https://pypi.org/project/python-msi/)
