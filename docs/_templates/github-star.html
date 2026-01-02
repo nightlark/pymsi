@@ -2,13 +2,30 @@
     <p style="font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--color-foreground-secondary);">
         Love pymsi? Support it!
     </p>
-    <a class="github-button"
-       href="https://github.com/nightlark/pymsi"
-       data-color-scheme="no-preference: light; light: light; dark: dark;"
-       data-icon="octicon-star"
-       data-size="large"
-       data-show-count="true"
-       aria-label="Star nightlark/pymsi on GitHub">Star</a>
-
+    <style>
+        /* Default: show the light button */
+        .pymsi-star-dark { display: none;}
+        /* When furo sets dark mode: show the dark button */
+        body[data-theme="dark"] .pymsi-star { display: none; }
+        body[data-theme="dark"] .pymsi-star-dark { display: inline; }
+    </style>
+    <span class = "pymsi-star">
+        <a class="github-button"
+        href="https://github.com/nightlark/pymsi"
+        data-color-scheme="no-preference: light; light: light; dark: light;"
+        data-icon="octicon-star"
+        data-size="large"
+        data-show-count="true"
+        aria-label="Star nightlark/pymsi on GitHub">Star</a>
+    </span>
+    <span class = "pymsi-star-dark">
+        <a class="github-button"
+        href="https://github.com/nightlark/pymsi"
+        data-color-scheme="no-preference: dark; light: dark; dark: dark;"
+        data-icon="octicon-star"
+        data-size="large"
+        data-show-count="true"
+        aria-label="Star nightlark/pymsi on GitHub">Star</a>
+    </span>
     <script async defer src="https://buttons.github.io/buttons.js"></script>
 </div>
