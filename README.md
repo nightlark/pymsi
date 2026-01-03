@@ -5,7 +5,7 @@
 # pymsi
 
 [![PyPI](https://img.shields.io/pypi/v/python-msi)](https://pypi.org/project/python-msi/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/python_msi)](https://pypi.org/project/python-msi/)
+[![PyPI - Downloads](https://static.pepy.tech/personalized-badge/python-msi?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads%2Fmonth)](https://pypi.org/project/python-msi/)
 [![MIT License](https://img.shields.io/pypi/l/python-msi.svg)](https://github.com/nightlark/pymsi/blob/main/LICENSE)
 [![Python Versions](https://img.shields.io/pypi/pyversions/python-msi.svg)](https://pypi.org/project/python-msi/)
 [![CI](https://github.com/nightlark/pymsi/actions/workflows/ci.yml/badge.svg)](https://github.com/nightlark/pymsi/actions)
