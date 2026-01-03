@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="pymsi logo" src="docs/logos/pymsi_logo_with_text_transparent_600px_lossy.webp" width="400px">
+    <img alt="pymsi logo" src="https://raw.githubusercontent.com/nightlark/pymsi/refs/heads/main/docs/logos/pymsi_logo_with_text_transparent_600px_lossy.webp" width="400px">
 </p>
 
 # pymsi
