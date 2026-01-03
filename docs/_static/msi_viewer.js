@@ -499,7 +499,7 @@ class MSIViewer {
         for (const file of additionalFiles) {
           let filePath = file.name.replace(/\\/g, '/');
           if (!filePath.startsWith('/')) filePath = '/' + filePath;
-          
+
           this.ensureDirectoryExists(filePath);
           this.pyodide.FS.writeFile(filePath, new Uint8Array(file.data));
         }
@@ -677,7 +677,7 @@ class MSIViewer {
   // Expand archives (ZIP) into a flat list of files
   async expandArchives(files) {
     const expandedFiles = [];
-    
+
     for (const file of files) {
       if (file.name.toLowerCase().endsWith('.zip')) {
         try {
@@ -687,7 +687,7 @@ class MSIViewer {
           zip.forEach((relativePath, zipEntry) => {
             entries.push({ path: relativePath, entry: zipEntry });
           });
-          
+
           for (const { path, entry } of entries) {
             if (!entry.dir) {
               const content = await entry.async("arraybuffer");
@@ -709,7 +709,7 @@ class MSIViewer {
         expandedFiles.push(file);
       }
     }
-    
+
     return expandedFiles;
   }
 
@@ -721,7 +721,7 @@ class MSIViewer {
     this.loadingIndicator.textContent = 'Processing files...';
 
     const rawFiles = Array.from(this.fileInput.files);
-    
+
     // Expand archives
     const files = await this.expandArchives(rawFiles);
 
