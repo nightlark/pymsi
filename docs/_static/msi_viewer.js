@@ -502,7 +502,7 @@ class MSIViewer {
       await this.pyodide.runPythonAsync(`
         from pathlib import Path
         current_package = pymsi.Package(Path('/uploaded.msi'))
-        current_msi = pymsi.Msi(current_package, True)
+        current_msi = pymsi.Msi(current_package, load_data=True, strict=False)
       `);
 
       this.currentPackage = await this.pyodide.globals.get('current_package');

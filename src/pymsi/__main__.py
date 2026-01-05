@@ -63,14 +63,14 @@ def main():
         if package is None:
             print("No MSI file provided. Use 'dump <path_to_msi_file>' to dump contents.")
         else:
-            msi = pymsi.Msi(package, True)
+            msi = pymsi.Msi(package, load_data=True)
             msi.pretty_print()
     elif command == "test":
         if package is None:
             print("No MSI file provided. Use 'test <path_to_msi_file>' to check validity.")
         else:
             try:
-                pymsi.Msi(package, True)
+                pymsi.Msi(package, load_data=True)
             except Exception as e:
                 print(f"Invalid .msi file: {package.path}")
                 traceback.print_exc()
@@ -84,7 +84,7 @@ def main():
         else:
             output_folder = Path(sys.argv[3]) if len(sys.argv) > 3 else Path.cwd()
             print(f"Loading MSI file: {package.path}")
-            msi = pymsi.Msi(package, True)
+            msi = pymsi.Msi(package, load_data=True)
 
             folders: List[CabFolder] = []
             for media in msi.medias.values():
