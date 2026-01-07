@@ -64,8 +64,8 @@ def extract_root(root: Directory, output: Path, is_root: bool = True):
                 if child.id != folder_name:
                     print(f"Warning: Directory ID '{child.id}' has a GUID suffix ({guid}).")
             else:
-                # The source directory name is always the name from DefaultDir, but if the id matches a known system folder property,
-                # use the ID as the folder name instead to help users identify the files that are installed to special locations
+                # By default, source directory name comes from DefaultDir (exposed here as child.name). If the id matches a known
+                # system folder propertyuse the ID as the folder name instead to help users identify files installed to special locations.
                 if child.id in system_folder_properties:
                     folder_name = child.id
         extract_root(child, output / folder_name, False)
@@ -220,7 +220,7 @@ def main():
         help="Output folder (default: current working directory)",
     )
     extract_parser.add_argument(
-        "--root_id",
+        "--root-id",
         type=str,
         default=None,
         help="ID of the root directory to extract if an MSI file has multiple root directories (default is TARGETDIR or the first root directory if TARGETDIR is not present)",
