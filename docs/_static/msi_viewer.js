@@ -34,6 +34,7 @@ class MSIViewer {
     this.tabPanes = document.querySelectorAll('.tab-pane');
     this.loadExampleFileButton = document.getElementById('load-example-file-button');
     this.fullscreenToggle = document.getElementById('fullscreen-toggle');
+    this.versionFooter = document.getElementById('pymsi-version-footer');
 
     // Constants
     this.MAX_ERROR_DISPLAY_LENGTH = 500;
@@ -444,6 +445,12 @@ class MSIViewer {
       this.pymsi = this.pyodide.pyimport('pymsi');
       this.loadingIndicator.style.display = 'none';
       console.log('pymsi loaded successfully');
+
+      // Display pymsi version
+      if (this.versionFooter) {
+        const pymsi_version = await this.pyodide.runPythonAsync('pymsi.__version__');
+        this.versionFooter.textContent = `pymsi version: ${pymsi_version}`;
+      }
 
       // Enable file input and load example button after successful initialization
       this.fileInput.disabled = false;
