@@ -14,6 +14,36 @@ import pymsi
 from pymsi.msi.directory import Directory
 from pymsi.thirdparty.refinery.cab import CabFolder
 
+# System Folder Properties: https://learn.microsoft.com/en-us/windows/win32/msi/property-reference#system-folder-properties
+# Used to install files to special system locations
+system_folder_properties = (
+    "AdminToolsFolder",
+    "AppDataFolder",
+    "CommonAppDataFolder",
+    "CommonFiles64Folder",
+    "CommonFilesFolder",
+    "DesktopFolder",
+    "FavoritesFolder",
+    "FontsFolder",
+    "LocalAppDataFolder",
+    "MyPicturesFolder",
+    "NetHoodFolder",
+    "PersonalFolder",
+    "PrintHoodFolder",
+    "ProgramFiles64Folder",
+    "ProgramFilesFolder",
+    "ProgramMenuFolder",
+    "RecentFolder",
+    "SendToFolder",
+    "StartMenuFolder",
+    "System16Folder",
+    "System64Folder",
+    "SystemFolder",
+    "TempFolder",
+    "TemplateFolder",
+    "WindowsFolder",
+)
+
 
 def extract_root(root: Directory, output: Path, is_root: bool = True):
     if not output.exists():
@@ -34,7 +64,10 @@ def extract_root(root: Directory, output: Path, is_root: bool = True):
                 if child.id != folder_name:
                     print(f"Warning: Directory ID '{child.id}' has a GUID suffix ({guid}).")
             else:
-                folder_name = child.id
+                # The source directory name is always the name from DefaultDir, but if the id matches a known system folder property,
+                # use the ID as the folder name instead to help users identify the files that are installed to special locations
+                if child.id in system_folder_properties:
+                    folder_name = child.id
         extract_root(child, output / folder_name, False)
 
 
@@ -78,6 +111,25 @@ def run_extract(args, package):
     total_folders = len(folders)
     print(f"Found {total_folders} folders in .cab files")
 
+    msi_root_dir = msi.root
+    if len(msi.roots) > 1:
+        if not args.root_id:
+            print(
+                f"Warning: MSI file has multiple root directories: {[r.id for r in msi.roots]}. Defaulting to {msi_root_dir.id}"
+            )
+        else:
+            found_matching_root = False
+            for root in msi.roots:
+                if root.id == args.root_id:
+                    found_matching_root = True
+                    msi_root_dir = root
+                    break
+            if not found_matching_root:
+                print(
+                    f"Error: Root directory with ID '{args.root_id}' not found. Available root directories: {[r.id for r in msi.roots]}"
+                )
+                sys.exit(1)
+
     futures = {}
     executor = ThreadPoolExecutor()
     completed_count = 0
@@ -107,7 +159,7 @@ def run_extract(args, package):
 
     print("\nDecompressing folders completed.")
     print(f"Extracting files from {package.path} to {args.output_folder}")
-    extract_root(msi.root, args.output_folder)
+    extract_root(msi_root_dir, args.output_folder)
     print(f"Files extracted from {package.path}")
 
 
@@ -160,11 +212,18 @@ def main():
         help="Extract files from the MSI file",
     )
     extract_parser.add_argument(
-        "output_folder",
+        "-o",
+        "--output",
+        dest="output_folder",
         type=Path,
-        nargs="?",
         default=Path.cwd(),
         help="Output folder (default: current working directory)",
+    )
+    extract_parser.add_argument(
+        "--root_id",
+        type=str,
+        default=None,
+        help="ID of the root directory to extract if an MSI file has multiple root directories (default is TARGETDIR or the first root directory if TARGETDIR is not present)",
     )
     extract_parser.set_defaults(func=run_extract)
 
