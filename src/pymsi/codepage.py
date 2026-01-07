@@ -1,5 +1,6 @@
 PAGES = {
-    0: "utf-8",
+    # CP 0 is the "system default", which is ambiguous and requires special handling
+    0: None,
     932: "cp932",
     936: "gbk",
     949: "cp949",
@@ -40,7 +41,30 @@ class CodePage:
         self.encoding = PAGES[id]
 
     def decode(self, data: bytes) -> str:
-        return data.decode(self.encoding)
+        # If a specific known encoding (non-neutral) was specified, use it
+        if self.encoding:
+            return data.decode(self.encoding)
+
+        # Handle Code Page 0 (Neutral/System Default)
+        if self.id == 0:
+            # 1. Try utf-8 first, since modern MSIs may use it for neutral.
+            try:
+                return data.decode("utf-8")
+            except UnicodeDecodeError:
+                pass
+
+            # 2. Try Windows-1252 (most common for older MSI files)
+            # This will handle typical (c), (r), and western accented characters
+            # The codec defines some byte values as undefined, so skip if it has those
+            if all(b not in (0x81, 0x8D, 0x8F, 0x90, 0x9D) for b in data):
+                try:
+                    return data.decode("cp1252")
+                except UnicodeDecodeError:
+                    pass
+
+            # 3. Last resort, latin-1 (iso-8859-1)
+            # Every byte (0-255) is mapped to a character, but may look like gibberish
+            return data.decode("latin_1")
 
 
 CodePage.DEFAULT = CodePage(0)
