@@ -95,6 +95,20 @@ def run_test(args, package):
         print(f"Valid .msi file: {package.path}")
 
 
+def run_suminfo(args, package):
+    summary = package.summary
+    print(f"Title: {summary.title() or ''}")
+    print(f"Subject: {summary.subject() or ''}")
+    print(f"Author: {summary.author() or ''}")
+    print(f"UUID: {summary.uuid() or ''}")
+    print(f"Architecture: {summary.arch() or ''}")
+    print(f"Languages: {summary.languages() or ''}")
+    print(f"Creating Application: {summary.creating_application() or ''}")
+    print(f"Creation Time: {summary.creation_time() or ''}")
+    print(f"Comments: {summary.comments() or ''}")
+    print(f"Word Count: {summary.word_count() or ''}")
+
+
 def run_extract(args, package):
     print(f"Loading MSI file: {package.path}")
     msi = pymsi.Msi(package, load_data=True, strict=args.strict)
@@ -204,6 +218,12 @@ def main():
         "test", parents=[msi_parser, strict_parser], help="Check if the file is a valid MSI file"
     )
     test_parser.set_defaults(func=run_test)
+
+    # suminfo
+    suminfo_parser = subparsers.add_parser(
+        "suminfo", parents=[msi_parser, strict_parser], help="Print summary information"
+    )
+    suminfo_parser.set_defaults(func=run_suminfo)
 
     # extract
     extract_parser = subparsers.add_parser(
