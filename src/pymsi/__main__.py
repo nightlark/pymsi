@@ -203,7 +203,7 @@ def main():
 
     # tables
     tables_parser = subparsers.add_parser(
-        "tables", parents=[msi_parser, strict_parser], help="List all tables in the MSI file"
+        "tables", parents=[msi_parser], help="List all tables in the MSI file"
     )
     tables_parser.set_defaults(func=run_tables)
 
@@ -221,7 +221,7 @@ def main():
 
     # suminfo
     suminfo_parser = subparsers.add_parser(
-        "suminfo", parents=[msi_parser, strict_parser], help="Print summary information"
+        "suminfo", parents=[msi_parser], help="Print summary information"
     )
     suminfo_parser.set_defaults(func=run_suminfo)
 
@@ -258,7 +258,8 @@ def main():
         if not args.msi_file.exists():
             print(f"Error: File '{args.msi_file}' not found.")
             sys.exit(1)
-        package = pymsi.Package(args.msi_file)
+        strict = getattr(args, "strict", False)
+        package = pymsi.Package(args.msi_file, strict=strict)
         try:
             args.func(args, package)
         except KeyboardInterrupt:

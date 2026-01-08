@@ -20,7 +20,7 @@ from .summary import Summary
 
 class Package:
     # TODO: consider typing.BinaryIO
-    def __init__(self, path_or_bytesio: Union[Path, io.BytesIO, mmap.mmap]):
+    def __init__(self, path_or_bytesio: Union[Path, io.BytesIO, mmap.mmap], strict: bool = True):
         if isinstance(path_or_bytesio, Path):
             self.path = path_or_bytesio.resolve(True)
             self.file = self.path.open("rb")
@@ -30,9 +30,9 @@ class Package:
         self.tables = {}
         self.ole = None
         self.summary = None
-        self._load()
+        self._load(strict=strict)
 
-    def _load(self):
+    def _load(self, strict: bool):
         self.ole = olefile.OleFileIO(self.file)
 
         with self.ole.openstream(SUMMARY_INFO_STREAM_NAME) as stream:
@@ -52,7 +52,7 @@ class Package:
 
         columns = self._read_columns()
         self.tables = {name: Table(name, columns[name]) for name in table_names}
-        self._read_validations()
+        self._read_validations(strict=strict)
         self.tables[TABLE_TABLES.name] = copy.copy(TABLE_TABLES)
         self.tables[TABLE_COLUMNS.name] = copy.copy(TABLE_COLUMNS)
 
@@ -77,11 +77,35 @@ class Package:
         )
         return columns
 
-    def _read_validations(self):
+    def _read_validations(self, strict: bool):
         if not self.ole.exists(TABLE_VALIDATION.stream_name()):
             return
 
-        nonexistent_tables = set()
+        nonexistent_tables = {
+            # SummaryInformation is a virtual table, so ignore any validation rules for it
+            "_SummaryInformation",
+            # Some tables are only defined in schema for merge modules (MSM files) and won't be present in (unmerged) msi files
+            # They are likely temporary tables, whose validation entries should have been removed after the merge
+            # We might want to consider adding a warning later about "N leftover merge module tables not present in package"
+            # These tables are required in merge modules
+            "ModuleSignature",
+            "ModuleComponent",
+            # Docs say these only occur in MSM files and installer databases that have already been combined with a merge module
+            "ModuleDependency",
+            "ModuleExclusion",
+            # These sequence tables only appear in MSM files
+            "ModuleAdminUISequence",
+            "ModuleAdminExecuteSequence",
+            "ModuleAdvtUISequence",
+            "ModuleAdvtExecuteSequence",
+            "ModuleIgnoreTable",
+            "ModuleInstallUISequence",
+            "ModuleInstallExecuteSequence",
+            # These tables are required in configurable merge modules, and are not merged into the target installation database
+            "ModuleSubstitution",
+            "ModuleConfiguration",
+        }
+
         with self.ole.openstream(TABLE_VALIDATION.stream_name()) as stream:
             rows = TABLE_VALIDATION._read_rows(BinaryReader(stream), self.string_pool)
             for row in rows:
@@ -98,17 +122,19 @@ class Package:
 
                 if table_name not in self.tables:
                     if table_name not in nonexistent_tables:
-                        print(
-                            f"Warning: Table {table_name} not found in package, skipping validation"
-                        )
+                        if strict:
+                            print(
+                                f"Warning: Table {table_name} not found in package, skipping validation"
+                            )
                         nonexistent_tables.add(table_name)
                     continue
 
                 column = self.tables[table_name].column(column_name)
                 if column is None:
-                    print(
-                        f"Warning: Column {column_name} not found in table {table_name}, skipping validation"
-                    )
+                    if strict:
+                        print(
+                            f"Warning: Column {column_name} not found in table {table_name}, skipping validation"
+                        )
                     continue
                 if is_nullable:
                     column.mark_nullable()
