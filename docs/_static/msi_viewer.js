@@ -325,23 +325,28 @@ class MSIViewer {
 
       const collectFilesFromDataTransfer = async (dataTransfer) => {
         if (!dataTransfer) return [];
+        console.log('[DEBUG] collecting files from DataTransfer', dataTransfer);
         if (dataTransfer.items && dataTransfer.items.length) {
           const files = [];
           for (const item of dataTransfer.items) {
             const entry = getAsEntry(item);
             if (entry) {
-              files.push(...await traverseEntry(entry));
+              const entryFiles = await traverseEntry(entry);
+              console.log('[DEBUG] Traversed entry:', entry.name, 'Found files:', entryFiles.length);
+              files.push(...entryFiles);
             } else if (item.kind === 'file') {
               const file = item.getAsFile();
               if (file) files.push(file);
             }
           }
+          console.log('[DEBUG] Collected files count:', files.length);
           if (files.length) return files;
         }
         return Array.from(dataTransfer.files || []);
       };
 
       const handleFilesSelection = async (files) => {
+        console.log('[DEBUG] handleFilesSelection called with', files.length, 'files');
         if (!files || !files.length) return;
 
         // Directly pass collected files to processing logic to avoid issues with
@@ -760,8 +765,13 @@ class MSIViewer {
     this.loadingIndicator.textContent = 'Processing files...';
 
     // Expand archives
-    const files = await this.expandArchives(rawFiles);    // Find MSI files
+    const files = await this.expandArchives(rawFiles);
+    console.log('[DEBUG] Expanded files:', files.map(f => f.name));
+
+    // Find MSI files
     const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
+    console.log('[DEBUG] MSI files found:', msiFiles.length);
+
     if (msiFiles.length === 0) {
       alert('Please select at least one .msi file (or a zip containing one).');
       this.loadingIndicator.style.display = 'none';
@@ -773,17 +783,25 @@ class MSIViewer {
       msiFile = msiFiles[0];
     } else {
       // Multiple MSIs selected, ask user which one to open
+      console.log('[DEBUG] Prompting for MSI selection...');
       msiFile = await this.promptForMsiSelection(msiFiles);
       if (!msiFile) {
+        console.log('[DEBUG] Selection cancelled');
         this.fileInput.value = ''; // Reset input so the change event fires if the same files are selected again
         this.loadingIndicator.style.display = 'none';
         return; // user cancelled selection
       }
+      console.log('[DEBUG] Selected MSI:', msiFile.name);
+      
       // Rebuild FileList to keep chosen MSI + others (non-MSI)
       const rebuilt = this.buildFileListForInput(msiFile, files);
       const dt = new DataTransfer();
-      for (const f of Array.from(rebuilt)) dt.items.add(f);
-      this.fileInput.files = dt.files;
+      try {
+        for (const f of Array.from(rebuilt)) dt.items.add(f);
+        this.fileInput.files = dt.files;
+      } catch (e) {
+        console.warn('Failed to update input files after selection:', e);
+      }
     }
 
     // Get any additional files (e.g., .cab files) excluding other MSIs
