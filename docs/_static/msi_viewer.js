@@ -775,6 +775,7 @@ class MSIViewer {
       msiFile = await this.promptForMsiSelection(msiFiles);
       if (!msiFile) {
         this.fileInput.value = ''; // Reset input so the change event fires if the same files are selected again
+        this.loadingIndicator.style.display = 'none';
         return; // user cancelled selection
       }
       // Rebuild FileList to keep chosen MSI + others (non-MSI)
