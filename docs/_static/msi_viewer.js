@@ -325,41 +325,67 @@ class MSIViewer {
 
       const collectFilesFromDataTransfer = async (dataTransfer) => {
         if (!dataTransfer) return [];
-        if (dataTransfer.items && dataTransfer.items.length) {
-          const files = [];
-          for (const item of dataTransfer.items) {
-            const entry = getAsEntry(item);
-            if (entry) {
-              files.push(...await traverseEntry(entry));
-            } else if (item.kind === 'file') {
-              const file = item.getAsFile();
-              if (file) files.push(file);
+        console.log('[DEBUG] collectFilesFromDataTransfer started');
+
+        let files = [];
+
+        // Strategy 1: Use DataTransferItemList (standard modern way)
+        try {
+          if (dataTransfer.items && dataTransfer.items.length) {
+            console.log(`[DEBUG] Found ${dataTransfer.items.length} items`);
+            const itemPromises = [];
+
+            // Convert to array immediately to stable reference
+            const items = Array.from(dataTransfer.items);
+
+            for (const item of items) {
+              // Skip non-file kinds
+              if (item.kind !== 'file') continue;
+
+              const entry = getAsEntry(item);
+              if (entry) {
+                console.log(`[DEBUG] Processing entry: ${entry.name} (${entry.isFile ? 'file' : 'dir'})`);
+                itemPromises.push(traverseEntry(entry));
+              } else {
+                // Fallback: getAsFile()
+                const file = item.getAsFile();
+                if (file) {
+                   console.log(`[DEBUG] Got file directly via getAsFile: ${file.name}`);
+                   itemPromises.push(Promise.resolve([file]));
+                }
+              }
             }
+
+            const results = await Promise.all(itemPromises);
+            files = results.flat();
+            console.log(`[DEBUG] Processed ${files.length} files from items`);
           }
-          if (files.length) return files;
+        } catch (e) {
+          console.warn('[DEBUG] Error using DataTransferItem API, falling back to .files:', e);
+          files = []; // reset to fallback
         }
-        return Array.from(dataTransfer.files || []);
+
+        // Strategy 2: Fallback to .files property if Strategy 1 failed or yielded no results
+        // Note: .files is a flat list and doesn't support directories well, but it's a safe backup
+        if (files.length === 0 && dataTransfer.files && dataTransfer.files.length) {
+           console.log('[DEBUG] Falling back to dataTransfer.files');
+           files = Array.from(dataTransfer.files);
+        }
+
+        console.log('[DEBUG] Final collected files count:', files.length);
+        if (files.length > 0) {
+            files.forEach(f => console.log(`[DEBUG] File collected: ${f.name} (${f.size} bytes)`));
+        }
+        return files;
       };
 
       const handleFilesSelection = async (files) => {
+        console.log('[DEBUG] handleFilesSelection called with', files.length, 'files');
         if (!files || !files.length) return;
-        const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
 
-        let chosenMsi = null;
-        if (msiFiles.length === 1) {
-          chosenMsi = msiFiles[0];
-        } else if (msiFiles.length > 1) {
-          chosenMsi = await this.promptForMsiSelection(msiFiles);
-          if (!chosenMsi) return; // user cancelled
-        }
-
-        const fileList = chosenMsi ? this.buildFileListForInput(chosenMsi, files) : files;
-        const dt = new DataTransfer();
-        for (const f of fileList) dt.items.add(f);
-        this.fileInput.files = dt.files;
-
-        const event = new Event('change', { bubbles: true });
-        this.fileInput.dispatchEvent(event);
+        // Directly pass collected files to processing logic to avoid issues with
+        // DataTransfer and input.files updates dropping files in some browsers
+        await this.handleFileSelect(files);
       };
 
       container.addEventListener('dragenter', (e) => {
@@ -748,19 +774,38 @@ class MSIViewer {
   }
 
   // Handle file selection
-  async handleFileSelect(event) {
-    if (!this.fileInput.files || this.fileInput.files.length === 0) return;
+  async handleFileSelect(eventOrFiles) {
+    let rawFiles = [];
+
+    // Determine source of files: event or direct array (from drag & drop)
+    if (Array.isArray(eventOrFiles)) {
+      rawFiles = eventOrFiles;
+
+      // Also update the file input for consistency if possible
+      try {
+        const dt = new DataTransfer();
+        for (const f of rawFiles) dt.items.add(f);
+        this.fileInput.files = dt.files;
+      } catch (e) {
+        // Ignore errors if updating input fails
+      }
+    } else {
+      // Event triggered from file input
+      if (!this.fileInput.files || this.fileInput.files.length === 0) return;
+      rawFiles = Array.from(this.fileInput.files);
+    }
 
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = 'Processing files...';
 
-    const rawFiles = Array.from(this.fileInput.files);
-
     // Expand archives
     const files = await this.expandArchives(rawFiles);
+    console.log('[DEBUG] Expanded files:', files.map(f => f.name));
 
     // Find MSI files
     const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
+    console.log('[DEBUG] MSI files found:', msiFiles.length);
+
     if (msiFiles.length === 0) {
       alert('Please select at least one .msi file (or a zip containing one).');
       this.loadingIndicator.style.display = 'none';
@@ -772,17 +817,25 @@ class MSIViewer {
       msiFile = msiFiles[0];
     } else {
       // Multiple MSIs selected, ask user which one to open
+      console.log('[DEBUG] Prompting for MSI selection...');
       msiFile = await this.promptForMsiSelection(msiFiles);
       if (!msiFile) {
+        console.log('[DEBUG] Selection cancelled');
         this.fileInput.value = ''; // Reset input so the change event fires if the same files are selected again
         this.loadingIndicator.style.display = 'none';
         return; // user cancelled selection
       }
+      console.log('[DEBUG] Selected MSI:', msiFile.name);
+
       // Rebuild FileList to keep chosen MSI + others (non-MSI)
       const rebuilt = this.buildFileListForInput(msiFile, files);
       const dt = new DataTransfer();
-      for (const f of Array.from(rebuilt)) dt.items.add(f);
-      this.fileInput.files = dt.files;
+      try {
+        for (const f of Array.from(rebuilt)) dt.items.add(f);
+        this.fileInput.files = dt.files;
+      } catch (e) {
+        console.warn('Failed to update input files after selection:', e);
+      }
     }
 
     // Get any additional files (e.g., .cab files) excluding other MSIs
