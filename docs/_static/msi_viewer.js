@@ -792,7 +792,7 @@ class MSIViewer {
         return; // user cancelled selection
       }
       console.log('[DEBUG] Selected MSI:', msiFile.name);
-      
+
       // Rebuild FileList to keep chosen MSI + others (non-MSI)
       const rebuilt = this.buildFileListForInput(msiFile, files);
       const dt = new DataTransfer();
