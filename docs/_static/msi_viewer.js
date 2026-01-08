@@ -730,7 +730,7 @@ class MSIViewer {
               });
               // Override name property to preserve directory structure from the zip
               Object.defineProperty(fileObj, 'name', { value: path });
-              
+
               expandedFiles.push(fileObj);
             }
           }
