@@ -326,22 +326,22 @@ class MSIViewer {
       const collectFilesFromDataTransfer = async (dataTransfer) => {
         if (!dataTransfer) return [];
         console.log('[DEBUG] collectFilesFromDataTransfer started');
-        
+
         let files = [];
-        
+
         // Strategy 1: Use DataTransferItemList (standard modern way)
         try {
           if (dataTransfer.items && dataTransfer.items.length) {
             console.log(`[DEBUG] Found ${dataTransfer.items.length} items`);
             const itemPromises = [];
-            
+
             // Convert to array immediately to stable reference
             const items = Array.from(dataTransfer.items);
-            
+
             for (const item of items) {
               // Skip non-file kinds
               if (item.kind !== 'file') continue;
-              
+
               const entry = getAsEntry(item);
               if (entry) {
                 console.log(`[DEBUG] Processing entry: ${entry.name} (${entry.isFile ? 'file' : 'dir'})`);
@@ -355,7 +355,7 @@ class MSIViewer {
                 }
               }
             }
-            
+
             const results = await Promise.all(itemPromises);
             files = results.flat();
             console.log(`[DEBUG] Processed ${files.length} files from items`);
