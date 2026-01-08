@@ -33,7 +33,7 @@ Like this tool and want to help out?
       <button id="load-example-file-button" type="button" class="example-file-btn" disabled>Load example file</button>
     </div>
     <div class="file-input-container">
-      <input type="file" id="msi-file-input" accept=".msi,.cab" multiple disabled />
+      <input type="file" id="msi-file-input" accept=".msi,.cab,.zip" multiple disabled />
       <label for="msi-file-input" class="file-input-label">
         <span class="file-input-text">Choose MSI File</span>
         <span class="file-input-icon">📁</span>
@@ -41,7 +41,7 @@ Like this tool and want to help out?
     </div>
     <div style="margin-top: 0.3rem; font-size: 0.85em; color: #666; text-align: center;">
       You can select multiple files at once if your MSI file references external .cab files<br>
-      (or drag and drop an entire folder containing an MSI installer)
+      (or drag and drop an entire folder or ZIP archive containing an MSI installer)
     </div>
     <div id="selected-files-info" style="display: none; margin-top: 0.5rem; font-size: 0.9em; color: #555;"></div>
     <div id="loading-indicator" style="display: none;">Loading...</div>

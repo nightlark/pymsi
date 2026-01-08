@@ -487,6 +487,21 @@ class MSIViewer {
     }
   }
 
+  // Ensure directory exists in Pyodide FS
+  ensureDirectoryExists(filePath) {
+    const dirName = filePath.substring(0, filePath.lastIndexOf('/'));
+    if (dirName && dirName !== '/') {
+      const dirs = dirName.split('/').filter(p => p);
+      let currentPath = '';
+      for (const dir of dirs) {
+        currentPath += '/' + dir;
+        if (!this.pyodide.FS.analyzePath(currentPath).exists) {
+          this.pyodide.FS.mkdir(currentPath);
+        }
+      }
+    }
+  }
+
   // Load MSI file from ArrayBuffer with optional additional files (used for file input, example, and URL)
   async loadMsiFileFromArrayBuffer(arrayBuffer, fileName = 'uploaded.msi', additionalFiles = []) {
     this.currentFileName = fileName;
@@ -501,31 +516,24 @@ class MSIViewer {
       // Read the file as an ArrayBuffer
       const msiBinaryData = new Uint8Array(arrayBuffer);
 
+      // Determine path for MSI file
+      let msiPath = fileName.replace(/\\/g, '/');
+      if (!msiPath.startsWith('/')) msiPath = '/' + msiPath;
+
+      // Ensure directory exists
+      this.ensureDirectoryExists(msiPath);
+
       // Write the MSI file to Pyodide's virtual file system
-      this.pyodide.FS.writeFile('/uploaded.msi', msiBinaryData);
+      this.pyodide.FS.writeFile(msiPath, msiBinaryData);
 
       // Write additional files (e.g., .cab files) to the same directory
       if (additionalFiles && additionalFiles.length > 0) {
-        this.loadingIndicator.textContent = `Writing ${additionalFiles.length} additional file(s)...`;
-        for (const fileObj of additionalFiles) {
-          const { data, name, path: customPath } = fileObj;
-          const filePath = customPath || `/${name}`;
-          // Create directory if path includes subdirectories
-          if (filePath.includes('/') && filePath !== `/${name}`) {
-            const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
-            try {
-              this.pyodide.FS.mkdirTree(dirPath);
-            } catch (e) {
-              // Only ignore EEXIST errors (directory already exists)
-              if (!e.message || !e.message.includes('exists')) {
-                console.error(`Failed to create directory ${dirPath}:`, e);
-                throw e;
-              }
-              console.log(`Directory ${dirPath} already exists`);
-            }
-          }
-          this.pyodide.FS.writeFile(filePath, new Uint8Array(data));
-          console.log(`Wrote additional file: ${filePath}`);
+        for (const file of additionalFiles) {
+          let filePath = file.name.replace(/\\/g, '/');
+          if (!filePath.startsWith('/')) filePath = '/' + filePath;
+
+          this.ensureDirectoryExists(filePath);
+          this.pyodide.FS.writeFile(filePath, new Uint8Array(file.data));
         }
       }
 
@@ -533,7 +541,7 @@ class MSIViewer {
       this.loadingIndicator.textContent = 'Processing MSI file...';
       await this.pyodide.runPythonAsync(`
         from pathlib import Path
-        current_package = pymsi.Package(Path('/uploaded.msi'))
+        current_package = pymsi.Package(Path('${msiPath}'))
         current_msi = pymsi.Msi(current_package, load_data=True, strict=False)
       `);
 
@@ -698,17 +706,64 @@ class MSIViewer {
     });
   }
 
+  // Expand archives (ZIP) into a flat list of files
+  async expandArchives(files) {
+    const expandedFiles = [];
+
+    for (const file of files) {
+      if (file.name.toLowerCase().endsWith('.zip')) {
+        try {
+          const zip = await JSZip.loadAsync(file);
+          // Iterate over all files in the zip
+          const entries = [];
+          zip.forEach((relativePath, zipEntry) => {
+            entries.push({ path: relativePath, entry: zipEntry });
+          });
+
+          for (const { path, entry } of entries) {
+            if (!entry.dir) {
+              const content = await entry.async("arraybuffer");
+              const safeName = path.split('/').pop();
+              // Create a real File object
+              const fileObj = new File([content], safeName, {
+                lastModified: entry.date ? entry.date.getTime() : Date.now()
+              });
+              // Override name property to preserve directory structure from the zip
+              Object.defineProperty(fileObj, 'name', { value: path });
+
+              expandedFiles.push(fileObj);
+            }
+          }
+        } catch (e) {
+          console.error(`Failed to unzip ${file.name}:`, e);
+          // If failed, add the original file
+          expandedFiles.push(file);
+        }
+      } else {
+        expandedFiles.push(file);
+      }
+    }
+
+    return expandedFiles;
+  }
+
   // Handle file selection
   async handleFileSelect(event) {
     if (!this.fileInput.files || this.fileInput.files.length === 0) return;
 
-    const files = Array.from(this.fileInput.files);
+    this.loadingIndicator.style.display = 'block';
+    this.loadingIndicator.textContent = 'Processing files...';
+
+    const rawFiles = Array.from(this.fileInput.files);
+
+    // Expand archives
+    const files = await this.expandArchives(rawFiles);
 
     // Find MSI files
     const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
     if (msiFiles.length === 0) {
-      this.loadingIndicator.style.display = 'block';
-      this.loadingIndicator.textContent = 'Error: No .msi file selected. Please select an MSI file.';
+      alert('Please select at least one .msi file (or a zip containing one).');
+      this.loadingIndicator.style.display = 'none';
       return;
     }
 
@@ -716,9 +771,11 @@ class MSIViewer {
     if (msiFiles.length === 1) {
       msiFile = msiFiles[0];
     } else {
+      // Multiple MSIs selected, ask user which one to open
       msiFile = await this.promptForMsiSelection(msiFiles);
       if (!msiFile) {
         this.fileInput.value = ''; // Reset input so the change event fires if the same files are selected again
+        this.loadingIndicator.style.display = 'none';
         return; // user cancelled selection
       }
       // Rebuild FileList to keep chosen MSI + others (non-MSI)
@@ -729,25 +786,23 @@ class MSIViewer {
     }
 
     // Get any additional files (e.g., .cab files) excluding other MSIs
-    const additionalFiles = Array.from(this.fileInput.files).filter(f => f !== msiFile && !f.name.toLowerCase().endsWith('.msi'));
+    const additionalFiles = files.filter(f => f !== msiFile && !f.name.toLowerCase().endsWith('.msi'));
 
     // Check file sizes (warn if total > 500MB)
     const maxTotalSize = 500 * 1024 * 1024; // 500MB
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
     if (totalSize > maxTotalSize) {
-      console.warn(`Total file size (${Math.round(totalSize / 1024 / 1024)}MB) exceeds recommended limit (${Math.round(maxTotalSize / 1024 / 1024)}MB). Loading may be slow.`);
+      if (!confirm(`The selected files are large (${(totalSize / 1024 / 1024).toFixed(1)} MB). This might crash your browser tab. Continue?`)) {
+        this.loadingIndicator.style.display = 'none';
+        return;
+      }
     }
 
     // Show info about selected files
     if (this.selectedFilesInfo) {
-      if (additionalFiles.length > 0) {
-        const fileList = additionalFiles.map(f => f.name).join(', ');
-        this.selectedFilesInfo.textContent = `Selected: ${msiFile.name} + ${additionalFiles.length} additional file(s): ${fileList}`;
-        this.selectedFilesInfo.style.display = 'block';
-      } else {
-        this.selectedFilesInfo.textContent = `Selected: ${msiFile.name}`;
-        this.selectedFilesInfo.style.display = 'block';
-      }
+      const count = additionalFiles.length + 1;
+      this.selectedFilesInfo.textContent = `Selected: ${msiFile.name}${additionalFiles.length > 0 ? ` + ${additionalFiles.length} other file(s)` : ''}`;
+      this.selectedFilesInfo.style.display = 'block';
     }
 
     // Read all files
