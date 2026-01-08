@@ -325,24 +325,58 @@ class MSIViewer {
 
       const collectFilesFromDataTransfer = async (dataTransfer) => {
         if (!dataTransfer) return [];
-        console.log('[DEBUG] collecting files from DataTransfer', dataTransfer);
-        if (dataTransfer.items && dataTransfer.items.length) {
-          const files = [];
-          for (const item of dataTransfer.items) {
-            const entry = getAsEntry(item);
-            if (entry) {
-              const entryFiles = await traverseEntry(entry);
-              console.log('[DEBUG] Traversed entry:', entry.name, 'Found files:', entryFiles.length);
-              files.push(...entryFiles);
-            } else if (item.kind === 'file') {
-              const file = item.getAsFile();
-              if (file) files.push(file);
+        console.log('[DEBUG] collectFilesFromDataTransfer started');
+        
+        let files = [];
+        
+        // Strategy 1: Use DataTransferItemList (standard modern way)
+        try {
+          if (dataTransfer.items && dataTransfer.items.length) {
+            console.log(`[DEBUG] Found ${dataTransfer.items.length} items`);
+            const itemPromises = [];
+            
+            // Convert to array immediately to stable reference
+            const items = Array.from(dataTransfer.items);
+            
+            for (const item of items) {
+              // Skip non-file kinds
+              if (item.kind !== 'file') continue;
+              
+              const entry = getAsEntry(item);
+              if (entry) {
+                console.log(`[DEBUG] Processing entry: ${entry.name} (${entry.isFile ? 'file' : 'dir'})`);
+                itemPromises.push(traverseEntry(entry));
+              } else {
+                // Fallback: getAsFile()
+                const file = item.getAsFile();
+                if (file) {
+                   console.log(`[DEBUG] Got file directly via getAsFile: ${file.name}`);
+                   itemPromises.push(Promise.resolve([file]));
+                }
+              }
             }
+            
+            const results = await Promise.all(itemPromises);
+            files = results.flat();
+            console.log(`[DEBUG] Processed ${files.length} files from items`);
           }
-          console.log('[DEBUG] Collected files count:', files.length);
-          if (files.length) return files;
+        } catch (e) {
+          console.warn('[DEBUG] Error using DataTransferItem API, falling back to .files:', e);
+          files = []; // reset to fallback
         }
-        return Array.from(dataTransfer.files || []);
+
+        // Strategy 2: Fallback to .files property if Strategy 1 failed or yielded no results
+        // Note: .files is a flat list and doesn't support directories well, but it's a safe backup
+        if (files.length === 0 && dataTransfer.files && dataTransfer.files.length) {
+           console.log('[DEBUG] Falling back to dataTransfer.files');
+           files = Array.from(dataTransfer.files);
+        }
+
+        console.log('[DEBUG] Final collected files count:', files.length);
+        if (files.length > 0) {
+            files.forEach(f => console.log(`[DEBUG] File collected: ${f.name} (${f.size} bytes)`));
+        }
+        return files;
       };
 
       const handleFilesSelection = async (files) => {
