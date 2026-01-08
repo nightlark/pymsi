@@ -343,23 +343,10 @@ class MSIViewer {
 
       const handleFilesSelection = async (files) => {
         if (!files || !files.length) return;
-        const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
 
-        let chosenMsi = null;
-        if (msiFiles.length === 1) {
-          chosenMsi = msiFiles[0];
-        } else if (msiFiles.length > 1) {
-          chosenMsi = await this.promptForMsiSelection(msiFiles);
-          if (!chosenMsi) return; // user cancelled
-        }
-
-        const fileList = chosenMsi ? this.buildFileListForInput(chosenMsi, files) : files;
-        const dt = new DataTransfer();
-        for (const f of fileList) dt.items.add(f);
-        this.fileInput.files = dt.files;
-
-        const event = new Event('change', { bubbles: true });
-        this.fileInput.dispatchEvent(event);
+        // Directly pass collected files to processing logic to avoid issues with
+        // DataTransfer and input.files updates dropping files in some browsers
+        await this.handleFileSelect(files);
       };
 
       container.addEventListener('dragenter', (e) => {
@@ -748,18 +735,32 @@ class MSIViewer {
   }
 
   // Handle file selection
-  async handleFileSelect(event) {
-    if (!this.fileInput.files || this.fileInput.files.length === 0) return;
+  async handleFileSelect(eventOrFiles) {
+    let rawFiles = [];
+
+    // Determine source of files: event or direct array (from drag & drop)
+    if (Array.isArray(eventOrFiles)) {
+      rawFiles = eventOrFiles;
+
+      // Also update the file input for consistency if possible
+      try {
+        const dt = new DataTransfer();
+        for (const f of rawFiles) dt.items.add(f);
+        this.fileInput.files = dt.files;
+      } catch (e) {
+        // Ignore errors if updating input fails
+      }
+    } else {
+      // Event triggered from file input
+      if (!this.fileInput.files || this.fileInput.files.length === 0) return;
+      rawFiles = Array.from(this.fileInput.files);
+    }
 
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = 'Processing files...';
 
-    const rawFiles = Array.from(this.fileInput.files);
-
     // Expand archives
-    const files = await this.expandArchives(rawFiles);
-
-    // Find MSI files
+    const files = await this.expandArchives(rawFiles);    // Find MSI files
     const msiFiles = files.filter(f => f.name && f.name.toLowerCase().endsWith('.msi'));
     if (msiFiles.length === 0) {
       alert('Please select at least one .msi file (or a zip containing one).');
