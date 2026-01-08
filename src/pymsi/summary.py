@@ -25,7 +25,7 @@ class Summary:
     def arch(self):
         value = self.properties.get(PROPERTY_TEMPLATE)
         if isinstance(value, str):
-            return value.split(";")[0]
+            return value.split(";")[0].strip()
         return None
 
     def author(self):
@@ -57,7 +57,7 @@ class Summary:
         if isinstance(value, str):
             template = value.split(";")
             if len(template) > 1:
-                return [int(lang) for lang in template[1:]]
+                return [int(lang) for lang in template[1].split(",")]
             return []
         return None
 
