@@ -94,51 +94,76 @@ class MSIViewer {
 
   // Prompt user to select which MSI to open when multiple are provided
   async promptForMsiSelection(msiFiles) {
+    return this.showSelectionModal('Select MSI to open', msiFiles, 'name');
+  }
+
+  // Show a modal dialog to select an option from a list
+  async showSelectionModal(title, options, displayKey) {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:9999;';
+      overlay.className = 'msi-modal-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:9999;backdrop-filter:blur(2px);';
 
       const dialog = document.createElement('div');
-      dialog.style.cssText = 'background:#fff;padding:16px;border-radius:8px;max-width:400px;width:90%;box-shadow:0 6px 24px rgba(0,0,0,0.2);';
+      dialog.className = 'msi-modal-dialog';
+      dialog.style.cssText = 'background:var(--msi-bg, #fff);color:var(--msi-foreground, #000);padding:20px;border-radius:8px;max-width:400px;width:90%;box-shadow:0 6px 24px rgba(0,0,0,0.2);border:1px solid var(--msi-border, #ccc);';
 
-      const title = document.createElement('h3');
-      title.textContent = 'Select MSI to open';
-      title.style.cssText = 'margin:0 0 12px 0;font-size:1.1rem;';
+      const titleEl = document.createElement('h3');
+      titleEl.textContent = title;
+      titleEl.style.cssText = 'margin:0 0 16px 0;font-size:1.2rem;border-bottom:1px solid var(--msi-border, #eee);padding-bottom:10px;';
 
       const select = document.createElement('select');
-      select.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;';
-      msiFiles.forEach((file, idx) => {
-        const option = document.createElement('option');
-        option.value = idx;
-        option.textContent = file.name;
-        select.appendChild(option);
+      select.style.cssText = 'width:100%;padding:10px;margin-bottom:20px;border-radius:4px;border:1px solid var(--msi-border, #ccc);background:var(--msi-overlay, #fff);color:var(--msi-foreground, #000);';
+
+      options.forEach((option, idx) => {
+        const optionEl = document.createElement('option');
+        optionEl.value = idx;
+        // Handle Pyodide Map proxies by checking for .get method
+        if (displayKey) {
+          optionEl.textContent = (option && typeof option.get === 'function')
+            ? option.get(displayKey)
+            : option[displayKey];
+        } else {
+          optionEl.textContent = option;
+        }
+        select.appendChild(optionEl);
       });
 
       const buttons = document.createElement('div');
-      buttons.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;';
+      buttons.style.cssText = 'display:flex;justify-content:flex-end;gap:12px;';
 
       const cancelBtn = document.createElement('button');
       cancelBtn.textContent = 'Cancel';
-      cancelBtn.style.cssText = 'padding:6px 12px;';
+      cancelBtn.style.cssText = 'padding:8px 16px;border:1px solid var(--msi-border, #ccc);background:var(--msi-surface, #f5f5f5);color:var(--msi-foreground, #000);border-radius:4px;cursor:pointer;';
+
       const chooseBtn = document.createElement('button');
-      chooseBtn.textContent = 'Open';
-      chooseBtn.style.cssText = 'padding:6px 12px;background:#007acc;color:#fff;border:none;border-radius:4px;';
+      chooseBtn.textContent = 'Select';
+      chooseBtn.style.cssText = 'padding:8px 16px;background:var(--msi-accent, #007acc);color:var(--msi-bg, #fff);border:none;border-radius:4px;cursor:pointer;font-weight:500;';
 
       buttons.appendChild(cancelBtn);
       buttons.appendChild(chooseBtn);
 
-      dialog.appendChild(title);
+      dialog.appendChild(titleEl);
       dialog.appendChild(select);
       dialog.appendChild(buttons);
       overlay.appendChild(dialog);
       document.body.appendChild(overlay);
 
-      const cleanup = () => overlay.remove();
-      cancelBtn.addEventListener('click', () => { cleanup(); resolve(null); });
-      chooseBtn.addEventListener('click', () => {
-        const idx = parseInt(select.value, 10);
+      const cleanup = () => {
+        if (document.body.contains(overlay)) {
+          document.body.removeChild(overlay);
+        }
+      };
+
+      cancelBtn.addEventListener('click', () => {
         cleanup();
-        resolve(msiFiles[idx]);
+        resolve(null);
+      });
+
+      chooseBtn.addEventListener('click', () => {
+        const selected = options[select.value];
+        cleanup();
+        resolve(selected);
       });
     });
   }
@@ -692,7 +717,10 @@ class MSIViewer {
       msiFile = msiFiles[0];
     } else {
       msiFile = await this.promptForMsiSelection(msiFiles);
-      if (!msiFile) return; // user cancelled selection
+      if (!msiFile) {
+        this.fileInput.value = ''; // Reset input so the change event fires if the same files are selected again
+        return; // user cancelled selection
+      }
       // Rebuild FileList to keep chosen MSI + others (non-MSI)
       const rebuilt = this.buildFileListForInput(msiFile, files);
       const dt = new DataTransfer();
@@ -982,6 +1010,38 @@ class MSIViewer {
     this.loadingIndicator.textContent = 'Extracting files...';
 
     try {
+      // First, check if we need to prompt the user to select a root (if there are multiple)
+      const roots = await this.pyodide.runPythonAsync('len(current_msi.roots)');
+      let rootToExtract = 'current_msi.root';
+
+      if (roots > 1) {
+        // Get list of roots
+        const rootInfo = await this.pyodide.runPythonAsync(`
+          roots_info = []
+          for i, r in enumerate(current_msi.roots):
+            roots_info.append({"index": i, "name": r.name, "path": r.id})
+          to_js(roots_info)
+        `);
+
+        // Ask user to pick
+        this.loadingIndicator.style.display = 'none'; // Temporarily hide
+        const selectedRoot = await this.showSelectionModal(
+          'Multiple installation roots found. Which one would you like to extract?',
+          rootInfo,
+          'path'
+        );
+        this.loadingIndicator.style.display = 'block'; // Show again
+
+        if (!selectedRoot) {
+          throw new Error('Extraction cancelled: No root directory selected.');
+        }
+
+        // Handle Pyodide Map proxies (dictionaries from Python are converted to Maps by default)
+        const index = (typeof selectedRoot.get === 'function') ? selectedRoot.get('index') : selectedRoot.index;
+
+        rootToExtract = `current_msi.roots[${index}]`;
+      }
+
       // Import and use the extract_root function from __main__.py
       await this.pyodide.runPythonAsync(`
         import shutil
@@ -994,8 +1054,8 @@ class MSIViewer {
             shutil.rmtree(temp_dir)
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        # Extract files using the same logic as the CLI
-        extract_root(current_msi.root, temp_dir)
+        # Extract files using the selected root
+        extract_root(${rootToExtract}, temp_dir)
       `);
 
       this.loadingIndicator.textContent = 'Creating ZIP archive...';
@@ -1015,6 +1075,7 @@ class MSIViewer {
 
       if (fileList.length === 0) {
         this.loadingIndicator.textContent = 'No files extracted';
+        alert('No files were extracted from the MSI. This may be due to the selected root not containing any files or an issue during extraction.');
         setTimeout(() => {
           this.loadingIndicator.style.display = 'none';
         }, 2000);
