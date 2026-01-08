@@ -723,13 +723,15 @@ class MSIViewer {
           for (const { path, entry } of entries) {
             if (!entry.dir) {
               const content = await entry.async("arraybuffer");
-              // Create a file-like object
-              expandedFiles.push({
-                name: path, // Keep relative path structure
-                size: content.byteLength,
-                arrayBuffer: async () => content,
+              const safeName = path.split('/').pop();
+              // Create a real File object
+              const fileObj = new File([content], safeName, {
                 lastModified: entry.date ? entry.date.getTime() : Date.now()
               });
+              // Override name property to preserve directory structure from the zip
+              Object.defineProperty(fileObj, 'name', { value: path });
+              
+              expandedFiles.push(fileObj);
             }
           }
         } catch (e) {
