@@ -15,8 +15,9 @@ T = TypeVar("T")
 
 
 class Msi:
-    def __init__(self, package: Package, load_data: bool = False):
+    def __init__(self, package: Package, load_data: bool = False, strict: bool = True):
         self.package = package
+        self.warnings = []
 
         self.components = self._load_map(Component, "Component")
         self.directories = self._load_map(Directory, "Directory")
@@ -37,7 +38,12 @@ class Msi:
         self._populate_map(self.remove_files, self.components, self.directories)
         self._populate_map(self.shortcuts, self.directories, self.components, self.icons)
 
-        self.root = self._load_root()
+        self.roots = [
+            directory
+            for directory in self.directories.values()
+            if directory._parent is None or directory.id == directory._parent
+        ]
+        self.root = self._load_root(strict)
 
     def _load_map(self, type_val: Type[T], name: str):
         table = self.package.get(name)
@@ -93,15 +99,30 @@ class Msi:
                 with path.open("rb") as f:
                     media._populate(f.read())
 
-    def _load_root(self):
-        roots = [directory for directory in self.directories.values() if directory.parent is None]
+    def _load_root(self, strict: bool):
+        if len(self.roots) != 1:
+            # Raise error in strict mode
+            if strict:
+                for root in self.roots:
+                    root.pretty_print()
+                raise ValueError(
+                    f"There should be exactly one root directory in the file tree. Found {len(self.roots)}."
+                )
 
-        if len(roots) != 1:
-            for root in roots:
-                root.pretty_print()
-            raise ValueError("There should be exactly one root directory in the file tree")
+            # Pick TARGETDIR if it exists as the root
+            for root in self.roots:
+                if root.id == "TARGETDIR":
+                    self.warnings.append(
+                        f"Found {len(self.roots)} root directories. Defaulting to TARGETDIR."
+                    )
+                    return root
 
-        return roots[0]
+            # Otherwise, just pick the first one
+            self.warnings.append(
+                f"Found {len(self.roots)} root directories. Defaulting to the first one: {self.roots[0].id}"
+            )
+
+        return self.roots[0]
 
     def pretty_print(self):
         self.root.pretty_print()

@@ -112,6 +112,10 @@ Like this tool and want to help out?
       </div>
     </div>
   </div>
+
+  <div id="pymsi-version-footer", style="text-align: center; margin-top: 1rem; font-size: 0.8em; color: var(--msi-muted);">
+    <!-- Version will be injected here via JS -->
+  </div>
 </div>
 
 <style>
