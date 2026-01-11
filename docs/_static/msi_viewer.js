@@ -952,11 +952,11 @@ class MSIViewer {
     for (const file of filesData) {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${file.get("name") || ''}</td>
-        <td>${file.get("directory") || ''}</td>
-        <td>${file.get("size") || ''}</td>
-        <td>${file.get("component") || ''}</td>
-        <td>${file.get("version") || ''}</td>
+        <td>${file.name || ''}</td>
+        <td>${file.directory || ''}</td>
+        <td>${file.size || ''}</td>
+        <td>${file.component || ''}</td>
+        <td>${file.version || ''}</td>
       `;
       this.filesList.appendChild(row);
     }
@@ -1017,7 +1017,7 @@ class MSIViewer {
     this.tableHeader.innerHTML = '';
     const headerRow = document.createElement('tr');
 
-    for (const column of tableData.get("columns")) {
+    for (const column of tableData.columns) {
       const th = document.createElement('th');
       th.textContent = column;
       headerRow.appendChild(th);
@@ -1028,20 +1028,20 @@ class MSIViewer {
     // Display table rows
     this.tableContent.innerHTML = '';
 
-    if (tableData.get("rows").length === 0) {
+    if (tableData.rows.length === 0) {
       const emptyRow = document.createElement('tr');
-      emptyRow.innerHTML = `<td colspan="${tableData.get("columns").length}">No data</td>`;
+      emptyRow.innerHTML = `<td colspan="${tableData.columns.length}">No data</td>`;
       this.tableContent.appendChild(emptyRow);
       return;
     }
 
-    for (const rowData of tableData.get("rows")) {
+    for (const rowData of tableData.rows) {
       const row = document.createElement('tr');
 
       // Iterate through columns to maintain the correct order
-      for (const column of tableData.get("columns")) {
+      for (const column of tableData.columns) {
         const td = document.createElement('td');
-        const value = rowData.get(column);
+        const value = rowData[column];
         td.textContent = (value !== null && value !== undefined) ? String(value) : '';
         row.appendChild(td);
       }
@@ -1087,7 +1087,7 @@ class MSIViewer {
 
     const table = document.createElement('table');
 
-    for (const [key, value] of summaryData) {
+    for (const [key, value] of Object.entries(summaryData)) {
       const row = document.createElement('tr');
       const keyCell = document.createElement('td');
       const valueCell = document.createElement('td');
@@ -1457,15 +1457,15 @@ class MSIViewer {
 
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
-      const columns = tableData.get('columns');
-      const rows = tableData.get('rows');
+      const columns = tableData.columns;
+      const rows = tableData.rows;
 
       // Create CSV content
       let csvContent = columns.join(',') + '\n';
 
       for (const row of rows) {
         const values = columns.map(col => {
-          const value = row.get(col);
+          const value = row[col];
           if (value === null || value === undefined) return '';
           // Escape quotes and wrap in quotes if contains comma, quote, or newline
           const strValue = String(value);
@@ -1499,14 +1499,14 @@ class MSIViewer {
 
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
-      const columns = tableData.get('columns');
-      const rows = tableData.get('rows');
+      const columns = tableData.columns;
+      const rows = tableData.rows;
 
       // Convert to array of arrays format for SheetJS
       const data = [columns];
       for (const row of rows) {
         const rowValues = columns.map(col => {
-          const value = row.get(col);
+          const value = row[col];
           return value === null || value === undefined ? '' : value;
         });
         data.push(rowValues);
@@ -1543,8 +1543,8 @@ class MSIViewer {
 
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
-      const columns = tableData.get('columns');
-      const rows = tableData.get('rows');
+      const columns = tableData.columns;
+      const rows = tableData.rows;
 
       // Create table with all columns as TEXT to preserve original data without type conversion
       const columnDefs = columns.map(col => `"${col}" TEXT`).join(', ');
@@ -1558,7 +1558,7 @@ class MSIViewer {
 
         for (const row of rows) {
           const values = columns.map(col => {
-            const value = row.get(col);
+            const value = row[col];
             return value === null || value === undefined ? null : String(value);
           });
           db.run(insertSQL, values);
@@ -1584,15 +1584,15 @@ class MSIViewer {
 
     for (const tableName of tableNames) {
       const tableData = await this.getTableData(tableName);
-      const columns = tableData.get('columns');
-      const rows = tableData.get('rows');
+      const columns = tableData.columns;
+      const rows = tableData.rows;
 
       // Convert to plain JavaScript objects
       const tableRows = [];
       for (const row of rows) {
         const rowObj = {};
         for (const col of columns) {
-          const value = row.get(col);
+          const value = row[col];
           rowObj[col] = value === null || value === undefined ? null : value;
         }
         tableRows.push(rowObj);

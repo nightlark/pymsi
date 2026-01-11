@@ -518,7 +518,7 @@ Like this tool and want to help out?
 
 
 <!-- Include the Pyodide script -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.js"></script>
 
 <!-- Include JSZip script -->
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
