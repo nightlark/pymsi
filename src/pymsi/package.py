@@ -149,7 +149,7 @@ class Package:
                 if description is not None:
                     column.mark_description(description)
 
-    def get(self, name: str) -> Optional[Table]:
+    def get(self, name: str, strict: bool = True) -> Optional[Table]:
         if name not in self.tables:
             return None
 
@@ -159,10 +159,10 @@ class Package:
             if self.ole.exists(stream_name):
                 with self.ole.openstream(table.stream_name()) as stream:
                     reader = BinaryReader(stream)
-                    table.read_rows(reader, self.string_pool)
+                    table.read_rows(reader, self.string_pool, strict=strict)
             else:
                 # Stream does not exist
-                table.read_rows(None, self.string_pool)
+                table.read_rows(None, self.string_pool, strict=strict)
         return table
 
     def __getitem__(self, name: str) -> Table:
