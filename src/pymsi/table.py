@@ -1,4 +1,5 @@
 import copy
+import warnings
 from typing import Dict, List, Optional
 
 from pymsi import streamname
@@ -31,12 +32,20 @@ class Table:
     def primary_key_indices(self) -> List[int]:
         return [index for index, column in enumerate(self.columns) if column.primary_key]
 
-    def _read_rows(self, reader: BinaryReader, string_pool: StringPool) -> List[Dict]:
+    def _read_rows(
+        self, reader: BinaryReader, string_pool: StringPool, strict: bool = True
+    ) -> List[Dict]:
         data_len = reader.size() - reader.tell()
         row_size = sum([c.width(string_pool.long_string_refs) for c in self.columns])
         num_rows = 0 if row_size == 0 else data_len // row_size
         if data_len % row_size != 0:
-            raise ValueError("Data length is not a multiple of row size")
+            if strict:
+                raise ValueError("Data length is not a multiple of row size")
+            warnings.warn(
+                f"Table '{self.name}': data length ({data_len}) is not a multiple of "
+                f"row size ({row_size}); ignoring {data_len % row_size} trailing bytes",
+                stacklevel=3,
+            )
         if num_rows > 0x10_0000:
             raise ValueError("Too many rows in table, maximum is 65536")
 
@@ -48,12 +57,14 @@ class Table:
         rows = [dict(zip([col.name for col in self.columns], row)) for row in rows]
         return rows
 
-    def read_rows(self, reader: Optional[BinaryReader], string_pool: StringPool) -> List[Dict]:
+    def read_rows(
+        self, reader: Optional[BinaryReader], string_pool: StringPool, strict: bool = True
+    ) -> List[Dict]:
         if self.rows is None:
             if reader is None:
                 self.rows = []
             else:
-                self.rows = self._read_rows(reader, string_pool)
+                self.rows = self._read_rows(reader, string_pool, strict=strict)
         return self.rows
 
     def get(self, row: int, localize: bool = False) -> Dict:

@@ -17,6 +17,7 @@ T = TypeVar("T")
 class Msi:
     def __init__(self, package: Package, load_data: bool = False, strict: bool = True):
         self.package = package
+        self._strict = strict
         self.warnings = []
 
         self.components = self._load_map(Component, "Component")
@@ -46,7 +47,7 @@ class Msi:
         self.root = self._load_root(strict)
 
     def _load_map(self, type_val: Type[T], name: str):
-        table = self.package.get(name)
+        table = self.package.get(name, strict=self._strict)
         ret: Union[Dict[str, T], Dict[int, T]] = {}
         if table is not None:
             for row in table.iter(True):
