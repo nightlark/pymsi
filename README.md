@@ -30,6 +30,8 @@ pip install python-msi
 
 It is recommended to either install it in a virtual environment, or use a tool such as pipx or uv to avoid potential conflicts with other Python modules on the same system.
 
+pymsi requires **Python 3.8 or newer**.
+
 ### Usage
 
 To use pymsi as a library that gets called from other code:
