@@ -62,8 +62,6 @@ def test_icon_table_size_mismatch_error_includes_table_name() -> None:
         assert "Icon" in message, (
             f"error message should identify the failing table, got: {message!r}"
         )
-        assert "row size" in message, (
-            f"error message should mention the row size, got: {message!r}"
-        )
+        assert "row size" in message, f"error message should mention the row size, got: {message!r}"
     else:
         raise AssertionError("expected ValueError for malformed Icon table stream")
