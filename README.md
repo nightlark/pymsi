@@ -28,9 +28,7 @@ pymsi is available on PyPI (PEP 541 request for pymsi name is being processed):
 pip install python-msi
 ```
 
-It is recommended to either install it in a virtual environment, or use a tool such as pipx or uv to avoid potential conflicts with other Python modules on the same system.
-
-pymsi requires **Python 3.8 or newer**.
+It is recommended to either install it in a virtual environment, or use a tool such as pipx or uv to avoid potential conflicts with other Python modules on the same system. Python 3.8 or newer is required.
 
 ### Usage
 
