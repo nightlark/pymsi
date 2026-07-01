@@ -1,13 +1,15 @@
-"""Regression test for https://github.com/nightlark/pymsi/issues/160.
+"""Tests for Table._read_rows size-mismatch error message.
 
 Some MSI files (notably QGIS OSGeo4W installers) contain an Icon table
 whose stream data length is not a multiple of the derived row size
-(e.g. data_len=5, row_size=6). Prior to the fix, Table._read_rows() raised
-a generic ``ValueError("Data length is not a multiple of row size")`` with
-no indication of which table was malformed, making the failure very
-hard to diagnose.
+(e.g. data_len=5, row_size=6). Prior to this change, Table._read_rows()
+raised a generic ``ValueError("Data length is not a multiple of row size")``
+with no indication of which table was malformed, making the failure very
+hard to diagnose. The error now includes the table name and the actual
+data_len / row_size pair so callers can pinpoint the offending table.
 
-This test verifies the error message includes the table name.
+Note: this change improves the diagnostic message only; it does not fix
+the underlying malformed-table issue itself (see #160 for that).
 """
 
 from pymsi.column import Column

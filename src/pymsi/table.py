@@ -36,11 +36,6 @@ class Table:
         row_size = sum([c.width(string_pool.long_string_refs) for c in self.columns])
         num_rows = 0 if row_size == 0 else data_len // row_size
         if data_len % row_size != 0:
-            # See https://github.com/nightlark/pymsi/issues/160
-            # The Icon table in some MSI files (e.g. QGIS OSGeo4W installers) contains
-            # a stream whose remaining data length is not a multiple of the derived row
-            # size (e.g. data_len=5, row_size=6). Include the table name and sizes in
-            # the error so callers can identify which table is malformed.
             raise ValueError(
                 f"Data length ({data_len}) for table '{self.name}' is not a multiple "
                 f"of row size ({row_size})"
