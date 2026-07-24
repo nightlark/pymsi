@@ -46,7 +46,8 @@ class Shortcut:
         print(" " * (indent + 2) + f"Description: {self.description}")
         print(" " * (indent + 2) + f"Hotkey: {self.hotkey}")
         if self.icon:
-            print(" " * (indent + 2) + f"Icon: {self.icon.id} ({self.icon.data})")
+            data = "not loaded" if self.icon.data is None else f"{len(self.icon.data)} bytes"
+            print(" " * (indent + 2) + f"Icon: {self.icon.id} ({data})")
             print(" " * (indent + 2) + f"Icon Index: {self.icon_index}")
         else:
             print(" " * (indent + 2) + "Icon: None")

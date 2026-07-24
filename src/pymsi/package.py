@@ -2,7 +2,7 @@ import copy
 import io
 import mmap
 from pathlib import Path
-from typing import Iterator, Optional, Union
+from typing import Iterator, List, Mapping, Optional, Union
 
 import olefile
 
@@ -164,6 +164,50 @@ class Package:
                 # Stream does not exist
                 table.read_rows(None, self.string_pool)
         return table
+
+    def get_datastream_bytes(
+        self, table_name: str, *primary_keys: Union[str, int]
+    ) -> Optional[bytes]:
+        """Return the payload bytes for an MSI Binary/OBJECT table cell.
+
+        Binary payloads are stored in separate OLE streams.  Their logical
+        names are formed as ``<Table>.<Key1>[.<Key2>...]`` from the table name
+        and the row's primary-key values.  Returns ``None`` when the matching
+        stream does not exist.
+        """
+        if not table_name:
+            raise ValueError("table name must not be empty")
+        if not primary_keys:
+            raise ValueError("at least one primary-key value is required")
+        if not all(isinstance(value, (str, int)) for value in primary_keys):
+            raise TypeError("primary-key values must be strings or integers")
+
+        logical_name = ".".join(str(value) for value in (table_name, *primary_keys))
+        stream_name = streamname.encode_unicode(logical_name, False)
+        if not self.ole.exists(stream_name):
+            return None
+
+        with self.ole.openstream(stream_name) as stream:
+            return stream.read()
+
+    def get_row_datastream_bytes(self, table: Table, row: Mapping[str, object]) -> Optional[bytes]:
+        """Return Binary/OBJECT payload bytes for ``row`` using its primary key."""
+        if not any(column.type == "binary" for column in table.columns):
+            raise ValueError(f"Table {table.name!r} has no binary column")
+
+        primary_key_indices = table.primary_key_indices()
+        if not primary_key_indices:
+            raise ValueError(f"Table {table.name!r} has no primary-key columns")
+
+        primary_keys: List[Union[str, int]] = []
+        for index in primary_key_indices:
+            column_name = table.columns[index].name
+            value = row[column_name]
+            if not isinstance(value, (str, int)):
+                raise TypeError(f"Primary-key value {column_name!r} must be a string or integer")
+            primary_keys.append(value)
+
+        return self.get_datastream_bytes(table.name, *primary_keys)
 
     def __getitem__(self, name: str) -> Table:
         table = self.get(name)

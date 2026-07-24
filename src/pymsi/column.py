@@ -6,9 +6,12 @@ from pymsi.constants import (
     COL_NULLABLE_BIT,
     COL_PRIMARY_KEY_BIT,
     COL_STRING_BIT,
+    COL_VALID_BIT,
 )
 from pymsi.reader import BinaryReader
 from pymsi.stringpool import StringPool
+
+_BINARY_CELL = "<binary>"
 
 
 class Column:
@@ -36,7 +39,16 @@ class Column:
 
     def set_bits(self, bits: int):
         field_size = bits & COL_FIELD_SIZE_MASK
-        if bits & COL_STRING_BIT:
+        # Binary/OBJECT shares COL_STRING_BIT with strings, but its table cell
+        # is always a fixed-width 2-byte marker. The data lives in a
+        # "<Table>.<PrimaryKey>" OLE stream.
+        # https://gitlab.winehq.org/wine/wine/-/blob/master/dlls/msi/msipriv.h (MSITYPE_IS_BINARY)
+        # https://github.com/mdsteele/rust-msi/blob/master/src/internal/column.rs
+        is_binary = (bits & ~COL_NULLABLE_BIT) == (COL_STRING_BIT | COL_VALID_BIT)
+
+        if is_binary:
+            self.binary()
+        elif bits & COL_STRING_BIT:
             self.string(field_size)
         elif field_size == 4:
             self.i32()
@@ -71,6 +83,10 @@ class Column:
             if val == 0:
                 return None
             return val ^ -0x8000
+        elif self.type == "binary":
+            # The payload lives in a separate OLE stream.
+            reader.read_i16_le()
+            return _BINARY_CELL
         else:
             raise ValueError(f"Unknown column type: {self.type}")
 
@@ -116,6 +132,11 @@ class Column:
 
     def i16(self):
         self.type = "i16"
+        self.size = 2
+        return self
+
+    def binary(self):
+        self.type = "binary"
         self.size = 2
         return self
 

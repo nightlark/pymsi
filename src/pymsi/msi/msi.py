@@ -30,6 +30,7 @@ class Msi:
 
         if load_data:
             self._load_media()
+            self._load_icons()
 
         self._populate_map(self.components, self.directories)
         self._populate_map(self.directories, self.directories)
@@ -71,6 +72,18 @@ class Msi:
                     processed.add(key)
             if len(map) == before_count:
                 break
+
+    def _load_icons(self):
+        table = self.package.get("Icon")
+        if table is None:
+            return
+
+        for row in table:
+            icon = self.icons[row["Name"]]
+            data = self.package.get_row_datastream_bytes(table, row)
+            if data is None:
+                raise ValueError(f"Icon data stream for {icon.id!r} not found in the .msi file")
+            icon._populate(data)
 
     def _load_media(self):
         for media in self.medias.values():
