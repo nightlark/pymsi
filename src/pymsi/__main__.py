@@ -4,6 +4,7 @@
 # https://stackoverflow.com/questions/9734978/view-msi-strings-in-binary
 
 import argparse
+import json
 import sys
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -109,8 +110,17 @@ def run_suminfo(args, package):
     print(f"Word Count: {summary.word_count() or ''}")
 
 
+def run_customactions(args, package):
+    collection = pymsi.collect_custom_actions(package)
+    if args.json:
+        print(json.dumps(collection.to_dict(), indent=2, ensure_ascii=False))
+    else:
+        print(pymsi.format_custom_actions(collection), end="")
+
+
 def run_extract(args, package):
     print(f"Loading MSI file: {package.path}")
+
     msi = pymsi.Msi(package, load_data=True, strict=args.strict)
 
     folders: List[CabFolder] = []
@@ -224,6 +234,18 @@ def main():
         "suminfo", parents=[msi_parser], help="Print summary information"
     )
     suminfo_parser.set_defaults(func=run_suminfo)
+
+    # customactions
+    customactions_parser = subparsers.add_parser(
+        "customactions",
+        aliases=["ca"],
+        parents=[msi_parser, strict_parser],
+        help="Decode custom actions and static invocation sites",
+    )
+    customactions_parser.add_argument(
+        "--json", action="store_true", help="Write machine-readable JSON"
+    )
+    customactions_parser.set_defaults(func=run_customactions)
 
     # extract
     extract_parser = subparsers.add_parser(
