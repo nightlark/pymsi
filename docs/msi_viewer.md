@@ -54,6 +54,7 @@ Like this tool and want to help out?
       <button class="tab-button" data-tab="tables">Tables</button>
       <button class="tab-button" data-tab="summary">Summary</button>
       <button class="tab-button" data-tab="streams">Streams</button>
+      <button class="tab-button" data-tab="analysis">Capabilities</button>
     </div>
     <div class="tab-content">
       <div id="files-tab" class="tab-pane active">
@@ -108,6 +109,12 @@ Like this tool and want to help out?
         <button id="extract-streams-button" disabled>Extract All Streams (ZIP)</button>
         <div id="streams-content">
           <p class="empty-message">Select an MSI file to view streams</p>
+        </div>
+      </div>
+      <div id="analysis-tab" class="tab-pane">
+        <h3>Capabilities</h3>
+        <div id="analysis-content" class="analysis-content">
+          <p class="empty-message">Select an MSI file to view capabilities analysis</p>
         </div>
       </div>
     </div>
@@ -531,3 +538,4 @@ Like this tool and want to help out?
 
 <!-- Include the MSI viewer script with the correct path for ReadTheDocs -->
 <script type="text/javascript" src="_static/msi_viewer.js"></script>
+<script type="text/javascript" src="_static/msi_analysis.js"></script>
