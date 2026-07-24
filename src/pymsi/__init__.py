@@ -4,5 +4,6 @@ except ModuleNotFoundError:
     __version__ = ""
     __version_tuple__ = ()
 
+from .analysis import *  # noqa: F401,F403
 from .msi import *  # noqa: F403
 from .package import Package  # noqa: F401

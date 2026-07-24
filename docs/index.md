@@ -37,6 +37,7 @@ includehidden:
 
 Overview <self>
 msi_viewer
+custom_action_analysis
 ```
 
 ```{toctree}

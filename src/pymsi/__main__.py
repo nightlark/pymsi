@@ -118,6 +118,14 @@ def run_customactions(args, package):
         print(pymsi.format_custom_actions(collection), end="")
 
 
+def run_analyze(args, package):
+    analysis = pymsi.analyze_package(package, script_preview_bytes=args.script_preview_bytes)
+    if args.json:
+        print(json.dumps(analysis.to_dict(), indent=2, ensure_ascii=False))
+    else:
+        print(pymsi.format_analysis(analysis), end="")
+
+
 def run_extract(args, package):
     print(f"Loading MSI file: {package.path}")
 
@@ -246,6 +254,24 @@ def main():
         "--json", action="store_true", help="Write machine-readable JSON"
     )
     customactions_parser.set_defaults(func=run_customactions)
+
+    # analyze
+    analyze_parser = subparsers.add_parser(
+        "analyze",
+        parents=[msi_parser, strict_parser],
+        help="Summarize installer behavior for review",
+    )
+    analyze_parser.add_argument("--json", action="store_true", help="Write machine-readable JSON")
+    analyze_parser.add_argument(
+        "--script-preview-bytes",
+        type=int,
+        default=pymsi.DEFAULT_PREVIEW_BYTES,
+        help=(
+            "Maximum bytes retained for script and decoded PowerShell previews "
+            f"(default: {pymsi.DEFAULT_PREVIEW_BYTES})"
+        ),
+    )
+    analyze_parser.set_defaults(func=run_analyze)
 
     # extract
     extract_parser = subparsers.add_parser(
