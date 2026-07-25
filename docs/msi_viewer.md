@@ -545,3 +545,4 @@ Like this tool and want to help out?
 <!-- Include the MSI viewer script with the correct path for ReadTheDocs -->
 <script type="text/javascript" src="_static/msi_viewer.js"></script>
 <script type="text/javascript" src="_static/msi_analysis.js"></script>
+<script type="text/javascript" src="_static/msi_binary_viewer.js"></script>
