@@ -162,6 +162,12 @@ Like this tool and want to help out?
     box-sizing: border-box;
   }
 
+  /* Keep the flyout laid out so overlap checks can make it visible again. */
+  readthedocs-flyout[data-pymsi-overlaps-viewer] {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
   .toolbar {
     display: flex;
     justify-content: flex-end;
