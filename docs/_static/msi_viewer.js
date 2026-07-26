@@ -611,8 +611,7 @@ class MSIViewer {
       // Install pymsi using micropip
       await this.pyodide.loadPackagesFromImports('import micropip');
       const micropip = this.pyodide.pyimport('micropip');
-      // The name of the package is 'python-msi' on PyPI
-      await micropip.install('python-msi>=0.0.0rc0');
+      await micropip.install('pymsi>=0.0.0rc1');
 
       // Import pymsi
       await this.pyodide.runPythonAsync(`
