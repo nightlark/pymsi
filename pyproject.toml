@@ -3,7 +3,7 @@ requires = ["hatchling>=1.27.0", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "python-msi"
+name = "pymsi"
 authors = [
     { name = "Asriel Camora", email = "asriel@camora.dev" },
     { name = "Ryan Mast", email = "mast.ryan@gmail.com" },

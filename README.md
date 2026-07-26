@@ -4,10 +4,10 @@
 
 # pymsi
 
-[![PyPI](https://img.shields.io/pypi/v/python-msi)](https://pypi.org/project/python-msi/)
-[![PyPI - Downloads](https://static.pepy.tech/personalized-badge/python-msi?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads%2Fmonth)](https://pypi.org/project/python-msi/)
-[![MIT License](https://img.shields.io/pypi/l/python-msi.svg)](https://github.com/nightlark/pymsi/blob/main/LICENSE)
-[![Python Versions](https://img.shields.io/pypi/pyversions/python-msi.svg)](https://pypi.org/project/python-msi/)
+[![PyPI](https://img.shields.io/pypi/v/pymsi)](https://pypi.org/project/pymsi/)
+[![PyPI - Downloads](https://static.pepy.tech/personalized-badge/python-msi?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads%2Fmonth)](https://pypi.org/project/pymsi/)
+[![MIT License](https://img.shields.io/pypi/l/pymsi.svg)](https://github.com/nightlark/pymsi/blob/main/LICENSE)
+[![Python Versions](https://img.shields.io/pypi/pyversions/pymsi.svg)](https://pypi.org/project/pymsi/)
 [![CI](https://github.com/nightlark/pymsi/actions/workflows/ci.yml/badge.svg)](https://github.com/nightlark/pymsi/actions)
 [![Documentation Status](https://readthedocs.org/projects/pymsi/badge/?version=latest)](https://pymsi.readthedocs.io/en/latest/?badge=latest)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/nightlark/pymsi/main.svg)](https://results.pre-commit.ci/latest/github/nightlark/pymsi/main)
@@ -22,10 +22,10 @@ For more in-depth documentation on pymsi usage and the API, see the [documentati
 
 ### Installation
 
-pymsi is available on PyPI (PEP 541 request for pymsi name is being processed):
+pymsi is available on PyPI:
 
 ```sh
-pip install python-msi
+pip install pymsi
 ```
 
 It is recommended to either install it in a virtual environment, or use a tool such as pipx or uv to avoid potential conflicts with other Python modules on the same system.
@@ -51,6 +51,9 @@ Available commands:
   tables - List all tables in the MSI file
   dump - Dump the contents of the MSI file
   test - Check if the file is a valid MSI file
+  suminfo - Print summary information
+  customactions (ca) - Decode custom actions and static invocation sites
+  analyze - Summarize installer behavior for review
   extract - Extract files from the MSI file
   help - Show this help message
 ```
