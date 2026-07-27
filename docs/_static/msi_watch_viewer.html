@@ -1,0 +1,1685 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="noindex, nofollow">
+  <title>MSI Peek</title>
+  <style>
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { background: #f2f3f5; }
+    body {
+      margin: 0;
+      min-width: 140px;
+      background: #f2f3f5;
+      color: #17191c;
+      font: 13px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+    main {
+      width: 100%;
+      max-width: 250px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 5px 6px 9px;
+      padding: 5px max(6px, env(safe-area-inset-right)) max(9px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+    }
+    h1 {
+      margin: 0 0 1px;
+      font-size: 18px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    button.mini-button {
+      width: auto;
+      min-height: 27px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+    }
+    .tagline, .fineprint {
+      margin: 0 0 5px;
+      color: #5c6168;
+      font-size: 10px;
+    }
+    .box {
+      margin: 0 0 6px;
+      padding: 6px;
+      border: 1px solid #c9cdd2;
+      border-radius: 10px;
+      background: #fff;
+    }
+    label.field-label {
+      display: block;
+      margin: 0 0 3px;
+      color: #4a4f55;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    select, button, .file-button {
+      width: 100%;
+      min-height: 36px;
+      margin: 0;
+      border: 1px solid #9da3aa;
+      border-radius: 8px;
+      background: #f8f9fa;
+      color: #111;
+      font: inherit;
+      font-weight: 650;
+    }
+    select {
+      padding: 4px 24px 4px 7px;
+      white-space: normal;
+    }
+    button, .file-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 7px;
+      text-align: center;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active, .file-button:active { transform: scale(.98); }
+    button:disabled, select:disabled { opacity: .55; }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    #file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+    #status {
+      min-height: 0;
+      margin: 0 0 6px;
+      padding: 0 2px;
+      color: #555b63;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+    #status:empty { display: none; }
+    #status.busy::before { content: "◌ "; }
+    #status.ok { color: #126a3a; }
+    #status.error { color: #a01919; font-weight: 650; }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin: 0 0 6px;
+    }
+    .tabs button {
+      min-height: 32px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .tabs button.active {
+      border-color: #1b5fc6;
+      background: #1b5fc6;
+      color: #fff;
+    }
+    .section-title {
+      margin: 0 0 4px;
+      font-size: 13px;
+    }
+    .source-name {
+      margin: 0 0 6px;
+      font-size: 11px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+    .kv {
+      padding: 4px 0;
+      border-top: 1px solid #e3e5e8;
+    }
+    .kv:first-child { border-top: 0; }
+    .key {
+      display: block;
+      color: #626870;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+    }
+    .value {
+      display: block;
+      margin-top: 1px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .subhead {
+      margin: 7px 0 1px;
+      color: #4a4f55;
+      font-size: 10px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .file-card {
+      margin: 0 0 5px;
+      padding: 6px;
+      border: 1px solid #d4d7db;
+      border-radius: 9px;
+      background: #fff;
+    }
+    .file-name {
+      font-weight: 750;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .file-path, .file-meta {
+      margin-top: 2px;
+      color: #5d636a;
+      font-size: 10px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    #more-files { margin-top: 2px; }
+    details {
+      margin-top: 6px;
+      font-size: 10px;
+      color: #6b4d00;
+    }
+    details div { margin-top: 3px; overflow-wrap: anywhere; }
+    footer {
+      margin-top: 7px;
+      color: #6a7077;
+      font-size: 9px;
+      text-align: center;
+    }
+    readthedocs-flyout { display: none !important; }
+    @media (max-width: 180px) {
+      body { font-size: 12px; }
+      main { padding-left: 4px; padding-right: 4px; }
+      h1 { font-size: 16px; }
+      select, button, .file-button { min-height: 33px; }
+      .box, .file-card { padding: 5px; border-radius: 8px; }
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #08090b; color: #f2f3f4; }
+      .tagline, .fineprint, #status, .key, .file-path, .file-meta, footer { color: #a9afb7; }
+      .box, .file-card { background: #15171a; border-color: #363a40; }
+      select, button, .file-button { background: #202328; border-color: #555b63; color: #f5f6f7; }
+      .kv { border-color: #30343a; }
+      label.field-label, .subhead { color: #c3c8ce; }
+      #status.ok { color: #73d69a; }
+      #status.error { color: #ff8f8f; }
+      details { color: #e2c26d; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="title-row">
+        <h1>MSI Peek</h1>
+        <button id="change-file" class="mini-button" type="button" hidden>Change</button>
+      </div>
+      <p id="tagline" class="tagline">Local summary + file list.</p>
+    </header>
+
+    <section id="chooser" class="box" aria-label="Choose an MSI file">
+      <label class="field-label" for="example-select">Hosted example</label>
+      <select id="example-select" disabled>
+        <option>Finding examples…</option>
+      </select>
+      <div class="actions">
+        <button id="open-example" type="button" disabled>Open</button>
+        <label id="file-label" class="file-button" for="file-input">Pick file</label>
+        <input id="file-input" type="file" accept=".msi,application/x-msi,application/octet-stream">
+      </div>
+      <p id="picker-note" class="fineprint">Picker support depends on watchOS.</p>
+    </section>
+
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <nav id="tabs" class="tabs" aria-label="Viewer sections" hidden>
+      <button id="summary-tab" class="active" type="button" aria-controls="summary-panel">Summary</button>
+      <button id="files-tab" type="button" aria-controls="files-panel">Files</button>
+    </nav>
+
+    <section id="summary-panel" class="box" hidden>
+      <h2 class="section-title">Summary</h2>
+      <div id="source-name" class="source-name"></div>
+      <div id="summary-content"></div>
+      <details id="warnings-wrap" hidden>
+        <summary>Parser notes</summary>
+        <div id="warnings"></div>
+      </details>
+    </section>
+
+    <section id="files-panel" hidden>
+      <div id="files-content"></div>
+      <button id="more-files" type="button" hidden>More files</button>
+    </section>
+
+    <footer>Summary + File table only. No cabinet extraction.</footer>
+  </main>
+
+  <script>
+  (function () {
+    "use strict";
+
+    var FREESECT = 0xFFFFFFFF;
+    var ENDOFCHAIN = 0xFFFFFFFE;
+    var FATSECT = 0xFFFFFFFD;
+    var DIFSECT = 0xFFFFFFFC;
+    var MAXREGSECT = 0xFFFFFFFA;
+    var MAX_INPUT_BYTES = 128 * 1024 * 1024;
+    var FILE_BATCH = 30;
+
+    function fail(message) {
+      throw new Error(message);
+    }
+
+    function isArrayBuffer(value) {
+      return value && Object.prototype.toString.call(value) === "[object ArrayBuffer]";
+    }
+
+    function ByteView(input) {
+      if (isArrayBuffer(input)) {
+        this.bytes = new Uint8Array(input);
+      } else if (input && input.buffer && typeof input.byteLength === "number") {
+        this.bytes = new Uint8Array(input.buffer, input.byteOffset || 0, input.byteLength);
+      } else {
+        fail("Expected binary data.");
+      }
+      this.view = new DataView(this.bytes.buffer, this.bytes.byteOffset, this.bytes.byteLength);
+      this.length = this.bytes.byteLength;
+    }
+
+    ByteView.prototype.need = function (offset, length, label) {
+      if (offset < 0 || length < 0 || offset + length > this.length) {
+        fail("Truncated " + (label || "data") + ".");
+      }
+    };
+    ByteView.prototype.u8 = function (offset, label) {
+      this.need(offset, 1, label);
+      return this.view.getUint8(offset);
+    };
+    ByteView.prototype.i8 = function (offset, label) {
+      this.need(offset, 1, label);
+      return this.view.getInt8(offset);
+    };
+    ByteView.prototype.u16 = function (offset, label) {
+      this.need(offset, 2, label);
+      return this.view.getUint16(offset, true);
+    };
+    ByteView.prototype.i16 = function (offset, label) {
+      this.need(offset, 2, label);
+      return this.view.getInt16(offset, true);
+    };
+    ByteView.prototype.u32 = function (offset, label) {
+      this.need(offset, 4, label);
+      return this.view.getUint32(offset, true);
+    };
+    ByteView.prototype.i32 = function (offset, label) {
+      this.need(offset, 4, label);
+      return this.view.getInt32(offset, true);
+    };
+    ByteView.prototype.sub = function (offset, length, label) {
+      this.need(offset, length, label);
+      return this.bytes.subarray(offset, offset + length);
+    };
+
+    function u64Number(view, offset, label) {
+      var low = view.u32(offset, label);
+      var high = view.u32(offset + 4, label);
+      var value = high * 4294967296 + low;
+      if (value > 9007199254740991) {
+        fail((label || "64-bit value") + " is too large for this viewer.");
+      }
+      return value;
+    }
+
+    function utf16le(bytes, offset, length) {
+      var end = offset + length;
+      var out = "";
+      var chunk = [];
+      var i;
+      for (i = offset; i + 1 < end; i += 2) {
+        chunk.push(bytes[i] | (bytes[i + 1] << 8));
+        if (chunk.length >= 256) {
+          out += String.fromCharCode.apply(null, chunk);
+          chunk = [];
+        }
+      }
+      if (chunk.length) {
+        out += String.fromCharCode.apply(null, chunk);
+      }
+      return out;
+    }
+
+    var CP1252 = [
+      "€", "\u0081", "‚", "ƒ", "„", "…", "†", "‡",
+      "ˆ", "‰", "Š", "‹", "Œ", "\u008d", "Ž", "\u008f",
+      "\u0090", "‘", "’", "“", "”", "•", "–", "—",
+      "˜", "™", "š", "›", "œ", "\u009d", "ž", "Ÿ"
+    ];
+
+    function decodeLatin1(bytes) {
+      var out = "";
+      var chunk = [];
+      var i;
+      for (i = 0; i < bytes.length; i += 1) {
+        chunk.push(bytes[i]);
+        if (chunk.length >= 512) {
+          out += String.fromCharCode.apply(null, chunk);
+          chunk = [];
+        }
+      }
+      if (chunk.length) {
+        out += String.fromCharCode.apply(null, chunk);
+      }
+      return out;
+    }
+
+    function decode1252(bytes) {
+      var out = "";
+      var i, b;
+      for (i = 0; i < bytes.length; i += 1) {
+        b = bytes[i];
+        if (b >= 0x80 && b <= 0x9F) {
+          out += CP1252[b - 0x80];
+        } else {
+          out += String.fromCharCode(b);
+        }
+      }
+      return out;
+    }
+
+    function decodeUtf8Manual(bytes, strict) {
+      var out = "";
+      var i = 0;
+      var b1, b2, b3, b4, code;
+      while (i < bytes.length) {
+        b1 = bytes[i++];
+        if (b1 < 0x80) {
+          out += String.fromCharCode(b1);
+          continue;
+        }
+        if (b1 >= 0xC2 && b1 <= 0xDF && i < bytes.length) {
+          b2 = bytes[i++];
+          if ((b2 & 0xC0) === 0x80) {
+            out += String.fromCharCode(((b1 & 0x1F) << 6) | (b2 & 0x3F));
+            continue;
+          }
+          i -= 1;
+        } else if (b1 >= 0xE0 && b1 <= 0xEF && i + 1 < bytes.length) {
+          b2 = bytes[i++];
+          b3 = bytes[i++];
+          if ((b2 & 0xC0) === 0x80 && (b3 & 0xC0) === 0x80 &&
+              !(b1 === 0xE0 && b2 < 0xA0) && !(b1 === 0xED && b2 >= 0xA0)) {
+            out += String.fromCharCode(((b1 & 0x0F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F));
+            continue;
+          }
+          i -= 2;
+        } else if (b1 >= 0xF0 && b1 <= 0xF4 && i + 2 < bytes.length) {
+          b2 = bytes[i++];
+          b3 = bytes[i++];
+          b4 = bytes[i++];
+          if ((b2 & 0xC0) === 0x80 && (b3 & 0xC0) === 0x80 && (b4 & 0xC0) === 0x80 &&
+              !(b1 === 0xF0 && b2 < 0x90) && !(b1 === 0xF4 && b2 >= 0x90)) {
+            code = ((b1 & 7) << 18) | ((b2 & 0x3F) << 12) | ((b3 & 0x3F) << 6) | (b4 & 0x3F);
+            code -= 0x10000;
+            out += String.fromCharCode(0xD800 + (code >> 10), 0xDC00 + (code & 0x3FF));
+            continue;
+          }
+          i -= 3;
+        }
+        if (strict) {
+          return null;
+        }
+        out += "\uFFFD";
+      }
+      return out;
+    }
+
+    function decoderLabel(codepage) {
+      var labels = {
+        932: "shift_jis",
+        936: "gbk",
+        949: "euc-kr",
+        950: "big5",
+        951: "big5",
+        1250: "windows-1250",
+        1251: "windows-1251",
+        1252: "windows-1252",
+        1253: "windows-1253",
+        1254: "windows-1254",
+        1255: "windows-1255",
+        1256: "windows-1256",
+        1257: "windows-1257",
+        1258: "windows-1258",
+        10000: "macintosh",
+        20127: "us-ascii",
+        28591: "iso-8859-1",
+        28592: "iso-8859-2",
+        28593: "iso-8859-3",
+        28594: "iso-8859-4",
+        28595: "iso-8859-5",
+        28596: "iso-8859-6",
+        28597: "iso-8859-7",
+        28598: "iso-8859-8",
+        65001: "utf-8"
+      };
+      return labels[codepage] || null;
+    }
+
+    function decodeBytes(bytes, codepage) {
+      var label, decoder, utf;
+      if (!bytes.length) {
+        return "";
+      }
+      if (codepage === 0) {
+        utf = decodeUtf8Manual(bytes, true);
+        return utf !== null ? utf : decode1252(bytes);
+      }
+      if (typeof TextDecoder !== "undefined") {
+        label = decoderLabel(codepage);
+        if (label) {
+          try {
+            decoder = new TextDecoder(label);
+            return decoder.decode(bytes);
+          } catch (ignore) {
+            // Fall through to compact built-in decoders.
+          }
+        }
+      }
+      if (codepage === 65001) {
+        return decodeUtf8Manual(bytes, false);
+      }
+      if (codepage === 1252) {
+        return decode1252(bytes);
+      }
+      return decodeLatin1(bytes);
+    }
+
+    function CompoundFile(input) {
+      var i;
+      this.data = new ByteView(input);
+      if (this.data.length < 512) {
+        fail("Not a Compound File: the file is too small.");
+      }
+      var signature = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+      for (i = 0; i < signature.length; i += 1) {
+        if (this.data.u8(i, "Compound File header") !== signature[i]) {
+          fail("Not an MSI/Compound File (bad signature).");
+        }
+      }
+      this.majorVersion = this.data.u16(26, "Compound File header");
+      if (this.majorVersion !== 3 && this.majorVersion !== 4) {
+        fail("Unsupported Compound File version " + this.majorVersion + ".");
+      }
+      if (this.data.u16(28, "Compound File header") !== 0xFFFE) {
+        fail("Unsupported Compound File byte order.");
+      }
+      this.sectorSize = Math.pow(2, this.data.u16(30, "Compound File header"));
+      this.miniSectorSize = Math.pow(2, this.data.u16(32, "Compound File header"));
+      if ((this.majorVersion === 3 && this.sectorSize !== 512) ||
+          (this.majorVersion === 4 && this.sectorSize !== 4096) ||
+          this.miniSectorSize < 16 || this.miniSectorSize > this.sectorSize) {
+        fail("Unsupported Compound File sector sizes.");
+      }
+      this.sectorCount = Math.floor(this.data.length / this.sectorSize) - 1;
+      if (this.sectorCount < 2) {
+        fail("Truncated Compound File.");
+      }
+      this.numDirectorySectors = this.data.u32(40, "Compound File header");
+      this.numFatSectors = this.data.u32(44, "Compound File header");
+      this.firstDirectorySector = this.data.u32(48, "Compound File header");
+      this.miniStreamCutoff = this.data.u32(56, "Compound File header");
+      this.firstMiniFatSector = this.data.u32(60, "Compound File header");
+      this.numMiniFatSectors = this.data.u32(64, "Compound File header");
+      this.firstDifatSector = this.data.u32(68, "Compound File header");
+      this.numDifatSectors = this.data.u32(72, "Compound File header");
+      if (this.numFatSectors > this.sectorCount || this.numDifatSectors > this.sectorCount) {
+        fail("Invalid Compound File allocation table counts.");
+      }
+      this.buildFat();
+      this.readDirectory();
+      this.buildMiniFat();
+    }
+
+    CompoundFile.prototype.sector = function (sectorId, label) {
+      var offset;
+      if (sectorId >= this.sectorCount || sectorId >= MAXREGSECT) {
+        fail("Invalid sector in " + (label || "stream") + ".");
+      }
+      offset = (sectorId + 1) * this.sectorSize;
+      return this.data.sub(offset, this.sectorSize, label || "sector");
+    };
+
+    CompoundFile.prototype.buildFat = function () {
+      var difat = [];
+      var i, j, sid, sector, entriesPerSector, next;
+      var seenDifat = {};
+      for (i = 0; i < 109; i += 1) {
+        sid = this.data.u32(76 + i * 4, "DIFAT header");
+        if (sid !== FREESECT) {
+          difat.push(sid);
+        }
+      }
+      sid = this.firstDifatSector;
+      entriesPerSector = this.sectorSize / 4;
+      for (i = 0; i < this.numDifatSectors; i += 1) {
+        if (sid === ENDOFCHAIN || sid === FREESECT) {
+          fail("Truncated DIFAT chain.");
+        }
+        if (seenDifat["$" + sid]) {
+          fail("Loop in DIFAT chain.");
+        }
+        seenDifat["$" + sid] = true;
+        sector = new ByteView(this.sector(sid, "DIFAT"));
+        for (j = 0; j < entriesPerSector - 1; j += 1) {
+          next = sector.u32(j * 4, "DIFAT");
+          if (next !== FREESECT) {
+            difat.push(next);
+          }
+        }
+        sid = sector.u32((entriesPerSector - 1) * 4, "DIFAT");
+      }
+      if (difat.length < this.numFatSectors) {
+        fail("Compound File FAT is incomplete.");
+      }
+      this.fat = [];
+      for (i = 0; i < this.numFatSectors; i += 1) {
+        sid = difat[i];
+        if (sid >= this.sectorCount || sid >= MAXREGSECT) {
+          fail("Invalid FAT sector.");
+        }
+        sector = new ByteView(this.sector(sid, "FAT"));
+        for (j = 0; j < entriesPerSector; j += 1) {
+          this.fat.push(sector.u32(j * 4, "FAT"));
+        }
+      }
+    };
+
+    CompoundFile.prototype.chain = function (startSector, allocationTable, limit, label) {
+      var chain = [];
+      var seen = {};
+      var sid = startSector >>> 0;
+      var key;
+      if (sid === ENDOFCHAIN || sid === FREESECT) {
+        return chain;
+      }
+      while (sid !== ENDOFCHAIN) {
+        if (sid >= MAXREGSECT || sid >= allocationTable.length) {
+          fail("Invalid " + label + " chain.");
+        }
+        key = "$" + sid;
+        if (seen[key]) {
+          fail("Loop in " + label + " chain.");
+        }
+        seen[key] = true;
+        chain.push(sid);
+        if (chain.length > limit) {
+          fail(label + " chain is too long.");
+        }
+        sid = allocationTable[sid] >>> 0;
+        if (sid === FREESECT || sid === FATSECT || sid === DIFSECT) {
+          fail("Unexpected sector marker in " + label + " chain.");
+        }
+      }
+      return chain;
+    };
+
+    CompoundFile.prototype.readRegular = function (startSector, size, label) {
+      var chain, capacity, outputLength, output, position, i, sector, take;
+      if (size === 0) {
+        return new Uint8Array(0);
+      }
+      chain = this.chain(startSector, this.fat, this.sectorCount + 1, label);
+      capacity = chain.length * this.sectorSize;
+      outputLength = typeof size === "number" ? size : capacity;
+      if (outputLength > capacity) {
+        fail("Truncated " + label + " stream.");
+      }
+      output = new Uint8Array(outputLength);
+      position = 0;
+      for (i = 0; i < chain.length && position < outputLength; i += 1) {
+        sector = this.sector(chain[i], label);
+        take = Math.min(sector.length, outputLength - position);
+        output.set(sector.subarray(0, take), position);
+        position += take;
+      }
+      return output;
+    };
+
+    CompoundFile.prototype.readDirectory = function () {
+      var bytes = this.readRegular(this.firstDirectorySector, undefined, "directory");
+      var view = new ByteView(bytes);
+      var entries = [];
+      var offset, nameLength, type, name, start, size, entry;
+      for (offset = 0; offset + 128 <= bytes.length; offset += 128) {
+        nameLength = view.u16(offset + 64, "directory entry");
+        type = view.u8(offset + 66, "directory entry");
+        if (type === 0) {
+          continue;
+        }
+        if (nameLength < 2 || nameLength > 64 || (nameLength & 1) !== 0) {
+          fail("Invalid Compound File directory name.");
+        }
+        name = utf16le(bytes, offset, nameLength - 2);
+        start = view.u32(offset + 116, "directory entry");
+        size = this.majorVersion === 3 ? view.u32(offset + 120, "directory entry") : u64Number(view, offset + 120, "stream size");
+        entry = { name: name, type: type, start: start, size: size };
+        entries.push(entry);
+      }
+      this.entries = entries;
+      this.root = null;
+      for (offset = 0; offset < entries.length; offset += 1) {
+        if (entries[offset].type === 5) {
+          this.root = entries[offset];
+          break;
+        }
+      }
+      if (!this.root) {
+        fail("Compound File root storage is missing.");
+      }
+    };
+
+    CompoundFile.prototype.buildMiniFat = function () {
+      var bytes, view, i;
+      this.miniFat = [];
+      this.rootMiniStream = null;
+      if (!this.numMiniFatSectors) {
+        return;
+      }
+      bytes = this.readRegular(
+        this.firstMiniFatSector,
+        this.numMiniFatSectors * this.sectorSize,
+        "mini FAT"
+      );
+      view = new ByteView(bytes);
+      for (i = 0; i + 4 <= bytes.length; i += 4) {
+        this.miniFat.push(view.u32(i, "mini FAT"));
+      }
+    };
+
+    CompoundFile.prototype.findEntry = function (name) {
+      var i;
+      for (i = 0; i < this.entries.length; i += 1) {
+        if (this.entries[i].type === 2 && this.entries[i].name === name) {
+          return this.entries[i];
+        }
+      }
+      return null;
+    };
+
+    CompoundFile.prototype.readMini = function (entry) {
+      var chain, output, position, i, miniOffset, take;
+      if (!entry.size) {
+        return new Uint8Array(0);
+      }
+      if (!this.miniFat.length) {
+        fail("Mini FAT is missing for stream " + entry.name + ".");
+      }
+      if (!this.rootMiniStream) {
+        this.rootMiniStream = this.readRegular(this.root.start, this.root.size, "mini stream");
+      }
+      chain = this.chain(entry.start, this.miniFat, this.miniFat.length + 1, "mini stream");
+      output = new Uint8Array(entry.size);
+      position = 0;
+      for (i = 0; i < chain.length && position < output.length; i += 1) {
+        miniOffset = chain[i] * this.miniSectorSize;
+        if (miniOffset + this.miniSectorSize > this.rootMiniStream.length) {
+          fail("Truncated mini stream.");
+        }
+        take = Math.min(this.miniSectorSize, output.length - position);
+        output.set(this.rootMiniStream.subarray(miniOffset, miniOffset + take), position);
+        position += take;
+      }
+      if (position !== output.length) {
+        fail("Truncated stream " + entry.name + ".");
+      }
+      return output;
+    };
+
+    CompoundFile.prototype.readStream = function (name) {
+      var entry = this.findEntry(name);
+      if (!entry) {
+        return null;
+      }
+      if (entry.size < this.miniStreamCutoff) {
+        return this.readMini(entry);
+      }
+      return this.readRegular(entry.start, entry.size, name);
+    };
+
+    function msiAlphabetValue(code) {
+      if (code >= 48 && code <= 57) { return code - 48; }
+      if (code >= 65 && code <= 90) { return code - 65 + 10; }
+      if (code >= 97 && code <= 122) { return code - 97 + 36; }
+      if (code === 46) { return 62; }
+      if (code === 95) { return 63; }
+      return -1;
+    }
+
+    function encodeMsiStreamName(name, isTable) {
+      var out = isTable ? "\u4840" : "";
+      var i, value1, value2;
+      for (i = 0; i < name.length; i += 1) {
+        value1 = msiAlphabetValue(name.charCodeAt(i));
+        if (value1 >= 0) {
+          value2 = i + 1 < name.length ? msiAlphabetValue(name.charCodeAt(i + 1)) : -1;
+          if (value2 >= 0) {
+            out += String.fromCharCode(0x3800 + (value2 << 6) + value1);
+            i += 1;
+          } else {
+            out += String.fromCharCode(0x4800 + value1);
+          }
+        } else {
+          out += name.charAt(i);
+        }
+      }
+      return out;
+    }
+
+    function parseStringPool(poolBytes, dataBytes) {
+      var pool = new ByteView(poolBytes);
+      var rawCodepage, longRefs, codepage, poolOffset, dataOffset, strings;
+      var length, refcount;
+      if (pool.length < 4) {
+        fail("Invalid MSI string pool.");
+      }
+      rawCodepage = pool.u32(0, "MSI string pool");
+      longRefs = (rawCodepage & 0x80000000) !== 0;
+      codepage = rawCodepage & 0x7FFFFFFF;
+      poolOffset = 4;
+      dataOffset = 0;
+      strings = [];
+      while (poolOffset < pool.length) {
+        pool.need(poolOffset, 4, "MSI string pool");
+        length = pool.u16(poolOffset, "MSI string pool");
+        refcount = pool.u16(poolOffset + 2, "MSI string pool");
+        poolOffset += 4;
+        if (length === 0 && refcount > 0) {
+          length = pool.u32(poolOffset, "MSI string pool");
+          poolOffset += 4;
+        }
+        if (dataOffset + length > dataBytes.length) {
+          fail("MSI string data is truncated.");
+        }
+        strings.push(decodeBytes(dataBytes.subarray(dataOffset, dataOffset + length), codepage));
+        dataOffset += length;
+      }
+      return {
+        strings: strings,
+        longRefs: longRefs,
+        codepage: codepage,
+        get: function (reference) {
+          if (reference === 0) {
+            return null;
+          }
+          if (reference < 1 || reference > strings.length) {
+            fail("Invalid MSI string reference " + reference + ".");
+          }
+          return strings[reference - 1];
+        }
+      };
+    }
+
+    function columnWidth(column, pool) {
+      return column.kind === "str" ? (pool.longRefs ? 3 : 2) : column.width;
+    }
+
+    function readStoredInteger16(view, offset, label) {
+      var value = view.i16(offset, label);
+      return value === 0 ? null : (value ^ -0x8000);
+    }
+
+    function readStoredInteger32(view, offset, label) {
+      var value = view.i32(offset, label);
+      return value === 0 ? null : (value ^ -0x80000000);
+    }
+
+    function readTableRows(bytes, columns, pool, tableName) {
+      var view = new ByteView(bytes);
+      var rowSize = 0;
+      var rowCount, rows, columnIndex, rowIndex, column, offset = 0;
+      var ref, value;
+      for (columnIndex = 0; columnIndex < columns.length; columnIndex += 1) {
+        rowSize += columnWidth(columns[columnIndex], pool);
+      }
+      if (!rowSize) {
+        return [];
+      }
+      if (bytes.length % rowSize !== 0) {
+        fail("Table " + tableName + " has a partial row.");
+      }
+      rowCount = bytes.length / rowSize;
+      if (rowCount > 100000) {
+        fail("Table " + tableName + " has too many rows for this watch viewer.");
+      }
+      rows = [];
+      for (rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+        rows.push({});
+      }
+      for (columnIndex = 0; columnIndex < columns.length; columnIndex += 1) {
+        column = columns[columnIndex];
+        for (rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+          if (column.kind === "str") {
+            ref = view.u16(offset, tableName);
+            offset += 2;
+            if (pool.longRefs) {
+              ref |= view.u8(offset, tableName) << 16;
+              offset += 1;
+            }
+            value = pool.get(ref);
+          } else if (column.kind === "i16") {
+            value = readStoredInteger16(view, offset, tableName);
+            offset += 2;
+          } else if (column.kind === "i32") {
+            value = readStoredInteger32(view, offset, tableName);
+            offset += 4;
+          } else if (column.kind === "binary") {
+            view.need(offset, 2, tableName);
+            offset += 2;
+            value = "<binary>";
+          } else {
+            fail("Unknown MSI column type in " + tableName + ".");
+          }
+          rows[rowIndex][column.name] = value;
+        }
+      }
+      return rows;
+    }
+
+    function decodeColumn(name, bits) {
+      var fieldSize = bits & 0xFF;
+      var isBinary = (bits & ~0x1000) === 0x900;
+      if (isBinary) {
+        return { name: name, kind: "binary", width: 2 };
+      }
+      if (bits & 0x800) {
+        return { name: name, kind: "str", width: fieldSize };
+      }
+      if (fieldSize === 4) {
+        return { name: name, kind: "i32", width: 4 };
+      }
+      if (fieldSize === 1 || fieldSize === 2) {
+        return { name: name, kind: "i16", width: 2 };
+      }
+      fail("Unsupported MSI column definition for " + name + ".");
+    }
+
+    function parseDatabase(cfb) {
+      var poolStream = cfb.readStream(encodeMsiStreamName("_StringPool", true));
+      var dataStream = cfb.readStream(encodeMsiStreamName("_StringData", true));
+      var columnsStream, tablesStream, pool, columnRows, tableRows, schema = {};
+      var columnsByTable = {}, tableNames = [], i, row, key, list;
+      var knownColumns = [
+        { name: "Table", kind: "str" },
+        { name: "Number", kind: "i16", width: 2 },
+        { name: "Name", kind: "str" },
+        { name: "Type", kind: "i16", width: 2 }
+      ];
+      var knownTables = [{ name: "Name", kind: "str" }];
+      if (!poolStream || !dataStream) {
+        fail("MSI string pool streams are missing.");
+      }
+      pool = parseStringPool(poolStream, dataStream);
+      columnsStream = cfb.readStream(encodeMsiStreamName("_Columns", true));
+      if (!columnsStream) {
+        fail("MSI _Columns table is missing.");
+      }
+      columnRows = readTableRows(columnsStream, knownColumns, pool, "_Columns");
+      for (i = 0; i < columnRows.length; i += 1) {
+        row = columnRows[i];
+        if (typeof row.Table !== "string" || typeof row.Name !== "string" ||
+            typeof row.Number !== "number" || typeof row.Type !== "number") {
+          fail("Invalid row in MSI _Columns table.");
+        }
+        key = "$" + row.Table;
+        if (!columnsByTable[key]) {
+          columnsByTable[key] = [];
+        }
+        columnsByTable[key].push(row);
+      }
+      for (key in columnsByTable) {
+        if (Object.prototype.hasOwnProperty.call(columnsByTable, key)) {
+          list = columnsByTable[key];
+          list.sort(function (a, b) { return a.Number - b.Number; });
+          schema[key] = [];
+          for (i = 0; i < list.length; i += 1) {
+            schema[key].push(decodeColumn(list[i].Name, list[i].Type));
+          }
+        }
+      }
+      tablesStream = cfb.readStream(encodeMsiStreamName("_Tables", true));
+      if (tablesStream) {
+        tableRows = readTableRows(tablesStream, knownTables, pool, "_Tables");
+        for (i = 0; i < tableRows.length; i += 1) {
+          if (typeof tableRows[i].Name === "string") {
+            tableNames.push(tableRows[i].Name);
+          }
+        }
+      }
+      return {
+        pool: pool,
+        schema: schema,
+        tableNames: tableNames,
+        readTable: function (name) {
+          var columns = schema["$" + name];
+          var stream;
+          if (!columns) {
+            return null;
+          }
+          stream = cfb.readStream(encodeMsiStreamName(name, true));
+          if (!stream) {
+            return [];
+          }
+          return readTableRows(stream, columns, pool, name);
+        }
+      };
+    }
+
+    function parsePropertyValue(view, offset, codepage) {
+      var type = view.u32(offset, "Summary Information property");
+      var length, bytes, low, high;
+      offset += 4;
+      if (type === 0 || type === 1) {
+        return null;
+      }
+      if (type === 2) {
+        return view.i16(offset, "Summary Information property");
+      }
+      if (type === 3) {
+        return view.i32(offset, "Summary Information property");
+      }
+      if (type === 16) {
+        return view.i8(offset, "Summary Information property");
+      }
+      if (type === 18) {
+        return view.u16(offset, "Summary Information property");
+      }
+      if (type === 19) {
+        return view.u32(offset, "Summary Information property");
+      }
+      if (type === 30) {
+        length = view.u32(offset, "Summary Information string");
+        offset += 4;
+        if (!length) {
+          return "";
+        }
+        bytes = view.sub(offset, length, "Summary Information string");
+        if (bytes[length - 1] === 0) {
+          bytes = bytes.subarray(0, length - 1);
+        }
+        return decodeBytes(bytes, codepage);
+      }
+      if (type === 31) {
+        length = view.u32(offset, "Summary Information string");
+        offset += 4;
+        if (!length) {
+          return "";
+        }
+        view.need(offset, length * 2, "Summary Information string");
+        return utf16le(view.bytes, offset, Math.max(0, length - 1) * 2);
+      }
+      if (type === 64) {
+        low = view.u32(offset, "Summary Information FILETIME");
+        high = view.u32(offset + 4, "Summary Information FILETIME");
+        return { filetimeLow: low, filetimeHigh: high };
+      }
+      return { unsupportedType: type };
+    }
+
+    function parseSummary(bytes) {
+      var view = new ByteView(bytes);
+      var sectionCount, sectionOffset, sectionSize, propertyCount;
+      var offsets = {}, codepage = 0, properties = {}, i, id, relative;
+      var summaryFmtid = [0xE0, 0x85, 0x9F, 0xF2, 0xF9, 0x4F, 0x68, 0x10, 0xAB, 0x91, 0x08, 0x00, 0x2B, 0x27, 0xB3, 0xD9];
+      if (view.length < 48 || view.u16(0, "Summary Information") !== 0xFFFE) {
+        fail("Invalid Summary Information stream.");
+      }
+      for (i = 0; i < summaryFmtid.length; i += 1) {
+        if (view.u8(28 + i, "Summary Information format identifier") !== summaryFmtid[i]) {
+          fail("Unexpected Summary Information format identifier.");
+        }
+      }
+      sectionCount = view.u32(24, "Summary Information");
+      if (sectionCount < 1) {
+        fail("Summary Information has no property set.");
+      }
+      sectionOffset = view.u32(44, "Summary Information");
+      view.need(sectionOffset, 8, "Summary Information property set");
+      sectionSize = view.u32(sectionOffset, "Summary Information property set");
+      propertyCount = view.u32(sectionOffset + 4, "Summary Information property set");
+      if (sectionSize < 8 || sectionOffset + sectionSize > view.length || propertyCount > 4096) {
+        fail("Invalid Summary Information property set.");
+      }
+      view.need(sectionOffset + 8, propertyCount * 8, "Summary Information property index");
+      for (i = 0; i < propertyCount; i += 1) {
+        id = view.u32(sectionOffset + 8 + i * 8, "Summary Information property index");
+        relative = view.u32(sectionOffset + 12 + i * 8, "Summary Information property index");
+        if (relative >= sectionSize) {
+          fail("Invalid Summary Information property offset.");
+        }
+        offsets["$" + id] = relative;
+      }
+      if (typeof offsets.$1 === "number") {
+        codepage = parsePropertyValue(view, sectionOffset + offsets.$1, 0);
+        if (typeof codepage !== "number") {
+          codepage = 0;
+        } else if (codepage < 0) {
+          codepage += 65536;
+        }
+      }
+      for (id in offsets) {
+        if (Object.prototype.hasOwnProperty.call(offsets, id)) {
+          properties[id.substring(1)] = parsePropertyValue(view, sectionOffset + offsets[id], codepage);
+        }
+      }
+      properties.codepage = codepage;
+      return properties;
+    }
+
+    function filetimeMilliseconds(value) {
+      if (!value || typeof value.filetimeHigh !== "number") {
+        return null;
+      }
+      return value.filetimeHigh * 429496.7296 + value.filetimeLow / 10000;
+    }
+
+    function filetimeDate(value) {
+      var milliseconds = filetimeMilliseconds(value);
+      var date;
+      if (milliseconds === null) {
+        return null;
+      }
+      date = new Date(milliseconds - 11644473600000);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    function mapRows(rows, keyName) {
+      var out = {};
+      var i, value;
+      if (!rows) { return out; }
+      for (i = 0; i < rows.length; i += 1) {
+        value = rows[i][keyName];
+        if (value !== null && typeof value !== "undefined") {
+          out["$" + value] = rows[i];
+        }
+      }
+      return out;
+    }
+
+    function longName(value) {
+      var text, pipe;
+      if (value === null || typeof value === "undefined") {
+        return "";
+      }
+      text = String(value);
+      pipe = text.indexOf("|");
+      return pipe >= 0 ? text.substring(pipe + 1) : text;
+    }
+
+    function targetDirectoryName(defaultDir, id) {
+      var target, colon;
+      if (defaultDir === null || typeof defaultDir === "undefined" || defaultDir === "") {
+        return id || "";
+      }
+      target = String(defaultDir);
+      colon = target.indexOf(":");
+      if (colon >= 0) {
+        target = target.substring(0, colon);
+      }
+      target = longName(target);
+      if (target === "SourceDir" && id === "TARGETDIR") {
+        return "";
+      }
+      if (target === ".") {
+        return id === "TARGETDIR" ? "" : "[" + id + "]";
+      }
+      return target;
+    }
+
+    function makeDirectoryResolver(directoryRows) {
+      var byId = mapRows(directoryRows, "Directory");
+      var cache = {};
+      function resolve(id, stack) {
+        var key = "$" + id;
+        var row, parent, own, path;
+        if (!id) { return ""; }
+        if (typeof cache[key] === "string") { return cache[key]; }
+        if (stack[key]) { return "[directory cycle]"; }
+        stack[key] = true;
+        row = byId[key];
+        if (!row) {
+          path = "[" + id + "]";
+        } else {
+          parent = resolve(row.Directory_Parent, stack);
+          own = targetDirectoryName(row.DefaultDir, row.Directory);
+          path = parent && own ? parent + "/" + own : (parent || own);
+        }
+        delete stack[key];
+        cache[key] = path;
+        return path;
+      }
+      return function (id) { return resolve(id, {}); };
+    }
+
+    function parseMsi(input) {
+      var cfb, result, summaryBytes, database, propertiesRows, propertyMap;
+      var fileRows, componentRows, directoryRows, components, resolveDirectory;
+      var i, row, component, file, totalSize = 0;
+      if (!isArrayBuffer(input) && !(input && input.buffer)) {
+        fail("No file data was supplied.");
+      }
+      if ((input.byteLength || 0) > MAX_INPUT_BYTES) {
+        fail("This file is over the 128 MB watch-viewer limit.");
+      }
+      cfb = new CompoundFile(input);
+      result = {
+        summary: null,
+        properties: {},
+        files: [],
+        tableCount: 0,
+        codepage: null,
+        warnings: [],
+        totalFileSize: 0
+      };
+      summaryBytes = cfb.readStream("\u0005SummaryInformation");
+      if (summaryBytes) {
+        try {
+          result.summary = parseSummary(summaryBytes);
+        } catch (summaryError) {
+          result.warnings.push("Summary: " + summaryError.message);
+        }
+      } else {
+        result.warnings.push("Summary Information stream not found.");
+      }
+      try {
+        database = parseDatabase(cfb);
+        result.tableCount = database.tableNames.length;
+        if (!result.tableCount) {
+          for (var schemaKey in database.schema) {
+            if (Object.prototype.hasOwnProperty.call(database.schema, schemaKey)) {
+              result.tableCount += 1;
+            }
+          }
+        }
+        result.codepage = database.pool.codepage;
+        propertiesRows = database.readTable("Property") || [];
+        propertyMap = {};
+        for (i = 0; i < propertiesRows.length; i += 1) {
+          if (typeof propertiesRows[i].Property === "string") {
+            propertyMap[propertiesRows[i].Property] = propertiesRows[i].Value;
+          }
+        }
+        result.properties = propertyMap;
+        fileRows = database.readTable("File");
+        if (fileRows === null) {
+          result.warnings.push("This database has no File table.");
+          fileRows = [];
+        }
+        componentRows = database.readTable("Component") || [];
+        directoryRows = database.readTable("Directory") || [];
+        components = mapRows(componentRows, "Component");
+        resolveDirectory = makeDirectoryResolver(directoryRows);
+        fileRows.sort(function (a, b) {
+          var aa = typeof a.Sequence === "number" ? a.Sequence : 0;
+          var bb = typeof b.Sequence === "number" ? b.Sequence : 0;
+          return aa - bb;
+        });
+        for (i = 0; i < fileRows.length; i += 1) {
+          row = fileRows[i];
+          component = components["$" + row.Component_];
+          file = {
+            id: row.File,
+            name: longName(row.FileName) || row.File || "(unnamed)",
+            size: typeof row.FileSize === "number" ? row.FileSize : null,
+            version: row.Version,
+            language: row.Language,
+            component: row.Component_,
+            directoryId: component ? component.Directory_ : null,
+            directory: component ? resolveDirectory(component.Directory_) : "",
+            sequence: row.Sequence
+          };
+          if (file.size !== null && file.size >= 0) {
+            totalSize += file.size;
+          }
+          result.files.push(file);
+        }
+        result.totalFileSize = totalSize;
+      } catch (databaseError) {
+        result.warnings.push("Database: " + databaseError.message);
+      }
+      if (!result.summary && !result.tableCount && !result.files.length) {
+        fail(result.warnings.length ? result.warnings.join(" ") : "No supported MSI metadata was found.");
+      }
+      return result;
+    }
+
+    function byId(id) { return document.getElementById(id); }
+
+    function setStatus(message, kind) {
+      var status = byId("status");
+      status.className = kind || "";
+      status.textContent = message || "";
+    }
+
+    function humanBytes(value) {
+      var units = ["B", "KB", "MB", "GB"];
+      var unit = 0;
+      var number = Number(value);
+      if (!isFinite(number) || number < 0) { return ""; }
+      while (number >= 1024 && unit < units.length - 1) {
+        number /= 1024;
+        unit += 1;
+      }
+      return (unit === 0 ? String(Math.round(number)) : number.toFixed(number >= 10 ? 1 : 2)) + " " + units[unit];
+    }
+
+    function localDate(value) {
+      var date = filetimeDate(value);
+      if (!date) { return null; }
+      try {
+        return date.toLocaleString();
+      } catch (ignore) {
+        return date.toString();
+      }
+    }
+
+    function addRow(container, key, value) {
+      var row, label, content;
+      if (value === null || typeof value === "undefined" || value === "") {
+        return;
+      }
+      row = document.createElement("div");
+      row.className = "kv";
+      label = document.createElement("span");
+      label.className = "key";
+      label.textContent = key;
+      content = document.createElement("span");
+      content.className = "value";
+      content.textContent = String(value);
+      row.appendChild(label);
+      row.appendChild(content);
+      container.appendChild(row);
+    }
+
+    function addSubhead(container, text) {
+      var heading = document.createElement("div");
+      heading.className = "subhead";
+      heading.textContent = text;
+      container.appendChild(heading);
+    }
+
+    var currentFiles = [];
+    var shownFiles = 0;
+
+    function renderWarnings(warnings) {
+      var wrap = byId("warnings-wrap");
+      var content = byId("warnings");
+      var i, line;
+      content.textContent = "";
+      if (!warnings || !warnings.length) {
+        wrap.hidden = true;
+        return;
+      }
+      for (i = 0; i < warnings.length; i += 1) {
+        line = document.createElement("div");
+        line.textContent = warnings[i];
+        content.appendChild(line);
+      }
+      wrap.hidden = false;
+    }
+
+    function renderSummary(result, sourceName, sourceSize) {
+      var container = byId("summary-content");
+      var summary = result.summary || {};
+      var props = result.properties || {};
+      var template = summary[7];
+      var templateParts = typeof template === "string" ? template.split(";") : [];
+      container.textContent = "";
+      byId("source-name").textContent = sourceName + (sourceSize ? " · " + humanBytes(sourceSize) : "");
+
+      addSubhead(container, "Package");
+      addRow(container, "Product", props.ProductName);
+      addRow(container, "Version", props.ProductVersion);
+      addRow(container, "Manufacturer", props.Manufacturer);
+      addRow(container, "Product code", props.ProductCode);
+      addRow(container, "Upgrade code", props.UpgradeCode);
+      addRow(container, "Files", result.files.length ? result.files.length + " · " + humanBytes(result.totalFileSize) + " uncompressed" : "0");
+      addRow(container, "Tables", result.tableCount || null);
+      addRow(container, "Database code page", result.codepage !== null ? result.codepage : null);
+
+      if (result.summary) {
+        addSubhead(container, "Summary Information");
+        addRow(container, "Code page", summary.codepage);
+        addRow(container, "Title", summary[2]);
+        addRow(container, "Subject", summary[3]);
+        addRow(container, "Author", summary[4]);
+        addRow(container, "Keywords", summary[5]);
+        addRow(container, "Comments", summary[6]);
+        addRow(container, "Architecture", templateParts.length ? templateParts[0] : null);
+        addRow(container, "Languages", templateParts.length > 1 ? templateParts.slice(1).join(";") : null);
+        addRow(container, "Last author", summary[8]);
+        addRow(container, "Revision", summary[9]);
+        addRow(container, "Created", localDate(summary[12]));
+        addRow(container, "Last saved", localDate(summary[13]));
+        addRow(container, "Installer version", summary[14]);
+        addRow(container, "Word count / flags", summary[15]);
+        addRow(container, "Creating app", summary[18]);
+        addRow(container, "Security", summary[19]);
+      }
+      renderWarnings(result.warnings);
+    }
+
+    function renderMoreFiles(reset) {
+      var container = byId("files-content");
+      var end, fragment, i, item, card, name, path, meta, parts;
+      if (reset) {
+        container.textContent = "";
+        shownFiles = 0;
+      }
+      if (!currentFiles.length) {
+        card = document.createElement("div");
+        card.className = "box";
+        card.textContent = "No rows were found in the File table.";
+        container.appendChild(card);
+        byId("more-files").hidden = true;
+        return;
+      }
+      end = Math.min(currentFiles.length, shownFiles + FILE_BATCH);
+      fragment = document.createDocumentFragment();
+      for (i = shownFiles; i < end; i += 1) {
+        item = currentFiles[i];
+        card = document.createElement("article");
+        card.className = "file-card";
+        name = document.createElement("div");
+        name.className = "file-name";
+        name.textContent = item.name;
+        card.appendChild(name);
+        if (item.directory) {
+          path = document.createElement("div");
+          path.className = "file-path";
+          path.textContent = item.directory;
+          card.appendChild(path);
+        }
+        parts = [];
+        if (item.size !== null) { parts.push(humanBytes(item.size)); }
+        if (item.version) { parts.push("v" + item.version); }
+        if (item.language) { parts.push("lang " + item.language); }
+        if (parts.length) {
+          meta = document.createElement("div");
+          meta.className = "file-meta";
+          meta.textContent = parts.join(" · ");
+          card.appendChild(meta);
+        }
+        fragment.appendChild(card);
+      }
+      container.appendChild(fragment);
+      shownFiles = end;
+      byId("more-files").hidden = shownFiles >= currentFiles.length;
+      if (!byId("more-files").hidden) {
+        byId("more-files").textContent = "More (" + (currentFiles.length - shownFiles) + ")";
+      }
+    }
+
+    function selectTab(name) {
+      var summarySelected = name === "summary";
+      byId("summary-panel").hidden = !summarySelected;
+      byId("files-panel").hidden = summarySelected;
+      byId("summary-tab").className = summarySelected ? "active" : "";
+      byId("files-tab").className = summarySelected ? "" : "active";
+    }
+
+    function renderResult(result, sourceName, sourceSize) {
+      currentFiles = result.files || [];
+      renderSummary(result, sourceName, sourceSize);
+      renderMoreFiles(true);
+      byId("files-tab").textContent = "Files " + currentFiles.length;
+      byId("tabs").hidden = false;
+      byId("summary-panel").hidden = false;
+      byId("chooser").hidden = true;
+      byId("tagline").hidden = true;
+      byId("change-file").hidden = false;
+      byId("change-file").textContent = "Change";
+      selectTab("summary");
+      setStatus(currentFiles.length + (currentFiles.length === 1 ? " file" : " files") + (result.tableCount ? " · " + result.tableCount + " tables" : ""), "ok");
+      try { window.scrollTo(0, 0); } catch (ignore) { /* Old mini browsers may not expose scrollTo. */ }
+    }
+
+    function parseLoadedBuffer(buffer, sourceName) {
+      var sourceSize = buffer && buffer.byteLength ? buffer.byteLength : 0;
+      setStatus("Parsing " + sourceName + "…", "busy");
+      window.setTimeout(function () {
+        var result;
+        try {
+          result = parseMsi(buffer);
+          renderResult(result, sourceName, sourceSize);
+        } catch (error) {
+          setStatus(error && error.message ? error.message : String(error), "error");
+        }
+      }, 10);
+    }
+
+    function progressText(prefix, event) {
+      if (event && event.lengthComputable && event.total) {
+        return prefix + " " + Math.round(event.loaded * 100 / event.total) + "%";
+      }
+      if (event && typeof event.loaded === "number") {
+        return prefix + " " + humanBytes(event.loaded);
+      }
+      return prefix;
+    }
+
+    function loadExample(url, name) {
+      var xhr = new XMLHttpRequest();
+      setStatus("Fetching " + name + "…", "busy");
+      try {
+        xhr.open("GET", url, true);
+        xhr.responseType = "arraybuffer";
+      } catch (openError) {
+        setStatus("Could not open the example URL: " + openError.message, "error");
+        return;
+      }
+      xhr.onprogress = function (event) {
+        setStatus(progressText("Fetching", event), "busy");
+      };
+      xhr.onload = function () {
+        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0) {
+          if (!xhr.response) {
+            setStatus("The example returned no data.", "error");
+            return;
+          }
+          parseLoadedBuffer(xhr.response, name);
+        } else {
+          setStatus("Could not fetch example (HTTP " + xhr.status + ").", "error");
+        }
+      };
+      xhr.onerror = function () {
+        setStatus("Could not fetch the example file.", "error");
+      };
+      try {
+        xhr.send();
+      } catch (error) {
+        setStatus("Could not fetch the example: " + error.message, "error");
+      }
+    }
+
+    function pageIsInStaticDirectory() {
+      return /\/_static\/[^\/]*$/.test(window.location.pathname);
+    }
+
+    function encodePathPart(value) {
+      return encodeURIComponent(value).replace(/%2F/gi, "/");
+    }
+
+    function exampleUrl(example) {
+      if (pageIsInStaticDirectory() && example.filename) {
+        return encodePathPart(example.filename);
+      }
+      return example.url || (example.filename ? "_static/" + encodePathPart(example.filename) : "");
+    }
+
+    function populateExamples(examples) {
+      var select = byId("example-select");
+      var button = byId("open-example");
+      var i, option;
+      select.textContent = "";
+      if (!examples || !examples.length) {
+        examples = [{ name: "Basic Example (12KB)", filename: "example.msi", url: "_static/example.msi" }];
+      }
+      for (i = 0; i < examples.length; i += 1) {
+        option = document.createElement("option");
+        option.value = String(i);
+        option.textContent = examples[i].name || examples[i].filename || ("Example " + (i + 1));
+        select.appendChild(option);
+      }
+      select._examples = examples;
+      select.disabled = false;
+      button.disabled = false;
+      setStatus("", "");
+    }
+
+    function fetchExamplesIndex() {
+      var inStatic = pageIsInStaticDirectory();
+      var candidates = inStatic ? ["examples.json", "../_static/examples.json", "_static/examples.json"] : ["_static/examples.json", "examples.json", "../_static/examples.json"];
+      var index = 0;
+      function attempt() {
+        var xhr;
+        var finished = false;
+        function nextOnce() {
+          if (finished) { return; }
+          finished = true;
+          attempt();
+        }
+        if (index >= candidates.length) {
+          populateExamples(null);
+          return;
+        }
+        xhr = new XMLHttpRequest();
+        try {
+          xhr.open("GET", candidates[index++], true);
+        } catch (openError) {
+          nextOnce();
+          return;
+        }
+        xhr.onreadystatechange = function () {
+          var parsed;
+          if (xhr.readyState !== 4) { return; }
+          if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0) {
+            try {
+              parsed = JSON.parse(xhr.responseText);
+              if (parsed && parsed.length) {
+                populateExamples(parsed);
+                return;
+              }
+            } catch (ignore) {
+              // Try the next likely location.
+            }
+          }
+          nextOnce();
+        };
+        xhr.onerror = nextOnce;
+        try {
+          xhr.send();
+        } catch (ignore) {
+          nextOnce();
+        }
+      }
+      attempt();
+    }
+
+    function handlePickedFile() {
+      var input = byId("file-input");
+      var file = input.files && input.files[0];
+      var reader;
+      if (!file) { return; }
+      if (file.size > MAX_INPUT_BYTES) {
+        setStatus("This file is over the 128 MB watch-viewer limit.", "error");
+        return;
+      }
+      if (typeof FileReader === "undefined") {
+        setStatus("This browser does not expose FileReader.", "error");
+        return;
+      }
+      reader = new FileReader();
+      reader.onprogress = function (event) {
+        setStatus(progressText("Reading", event), "busy");
+      };
+      reader.onload = function () {
+        parseLoadedBuffer(reader.result, file.name || "selected.msi");
+      };
+      reader.onerror = function () {
+        setStatus("The selected file could not be read.", "error");
+      };
+      try {
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        setStatus("The selected file could not be opened: " + error.message, "error");
+      }
+    }
+
+    function initUi() {
+      byId("open-example").addEventListener("click", function () {
+        var select = byId("example-select");
+        var examples = select._examples || [];
+        var selected = examples[parseInt(select.value, 10) || 0];
+        var url;
+        if (!selected) {
+          setStatus("No example is selected.", "error");
+          return;
+        }
+        url = exampleUrl(selected);
+        if (!url) {
+          setStatus("The example has no usable URL.", "error");
+          return;
+        }
+        loadExample(url, selected.filename || selected.name || "example.msi");
+      });
+      byId("file-input").addEventListener("change", handlePickedFile);
+      byId("summary-tab").addEventListener("click", function () { selectTab("summary"); });
+      byId("files-tab").addEventListener("click", function () { selectTab("files"); });
+      byId("more-files").addEventListener("click", function () { renderMoreFiles(false); });
+      byId("change-file").addEventListener("click", function () {
+        var chooser = byId("chooser");
+        chooser.hidden = !chooser.hidden;
+        this.textContent = chooser.hidden ? "Change" : "Done";
+        if (!chooser.hidden) {
+          try { window.scrollTo(0, 0); } catch (ignore) { /* No action needed. */ }
+        }
+      });
+      if (typeof FileReader === "undefined") {
+        byId("file-input").disabled = true;
+        byId("file-label").setAttribute("aria-disabled", "true");
+        byId("picker-note").textContent = "This browser cannot read picked files; hosted examples still work.";
+      }
+      fetchExamplesIndex();
+    }
+
+    if (typeof window !== "undefined") {
+      window.MsiWatchParser = {
+        parse: parseMsi,
+        encodeStreamName: encodeMsiStreamName
+      };
+    }
+    if (typeof document !== "undefined") {
+      initUi();
+    }
+  }());
+  </script>
+</body>
+</html>
