@@ -922,7 +922,7 @@
             .analysis-summary { margin: 0 0 1.25rem; padding: 1rem; border: 1px solid var(--msi-border, #d5d8de); border-radius: 8px; background: var(--msi-bg, #fff); }
             .analysis-summary-primary { font-size: 1.05rem; font-weight: 700; }
             .analysis-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .55rem; margin: .85rem 0; }
-            .analysis-summary-fact { display: flex; flex-direction: column; gap: .1rem; padding: .55rem .6rem; border-radius: 6px; background: var(--msi-surface, #f6f7fb); border: 1px solid transparent; text-align: left; color: inherit; }
+            .analysis-summary-fact { display: flex; flex-direction: column; gap: .1rem; padding: .55rem .6rem; border-radius: 6px; overflow-wrap: break-word; background: var(--msi-surface, #f6f7fb); border: 1px solid transparent; text-align: left; color: inherit; }
             button.analysis-summary-fact { cursor: pointer; font: inherit; }
             button.analysis-summary-fact:hover { border-color: var(--msi-accent, #06c); }
             .analysis-summary-fact.is-active { border-color: var(--msi-accent, #06c); box-shadow: inset 0 0 0 1px var(--msi-accent, #06c); }
