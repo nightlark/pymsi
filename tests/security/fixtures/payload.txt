@@ -1,0 +1,2 @@
+This is an inert payload used only by pymsi security regression fixtures.
+

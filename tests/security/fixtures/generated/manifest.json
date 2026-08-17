@@ -1,0 +1,34 @@
+{
+  "description": "Inert pymsi security regression fixtures",
+  "fixtures": {
+    "benign_msi": "benign.msi",
+    "metadata_innerhtml_msi": "metadata_innerhtml.msi",
+    "path_traversal_directory_msi": "path_traversal_directory.msi",
+    "path_traversal_file_msi": "path_traversal_file.msi",
+    "pyodide_module_zip": "pyodide_module_overwrite.zip",
+    "python_filename_zip": "python_filename_injection.zip",
+    "python_table_name_msi": "python_table_name.msi"
+  },
+  "markers": {
+    "metadata_innerhtml": "<img src=x onerror=\"alert(&apos;PYMSI metadata innerHTML fixture&apos;)\">",
+    "path_traversal_directory_name": "../../PYMSI_DIRECTORY_TRAVERSAL_CANARY",
+    "path_traversal_file_name": "../../../PYMSI_PATH_TRAVERSAL_CANARY.txt",
+    "pyodide_module_paths": [
+      "lib/python3.12/site-packages/pymsi/__main__.py",
+      "lib/python3.13/site-packages/pymsi/__main__.py",
+      "lib/python3.14/site-packages/pymsi/__main__.py"
+    ],
+    "pyodide_module_source": "from js import alert\n\ndef extract_root(root, output, is_root=True):\n    alert('PYMSI Pyodide module overwrite fixture')\n    output.mkdir(parents=True, exist_ok=True)\n    (output / 'PYMSI_MODULE_OVERWRITE_CANARY.txt').write_text(\n        'The ZIP replaced pymsi.__main__ inside the Pyodide filesystem.\\n'\n    )\n",
+    "python_filename_entry": "trigger') if (__import__('js').alert('PYMSI filename Python injection fixture') or True) else Path('payload.msi",
+    "python_table_name": "X');__import__('js').alert(7)#"
+  },
+  "sha256": {
+    "benign.msi": "33dde47b8abe03c96f8b62c61c51765cb2ab2a82662651f0639b85a127853a0d",
+    "metadata_innerhtml.msi": "1feecb27a43aec01c76098a10b981e6fa5cf335568cd4c4e0a9211ea2bec8e1a",
+    "path_traversal_directory.msi": "afb70e1cb051c7c79b08f7fa317d712994fcd5567bc3d737173f0c4428a3c7f2",
+    "path_traversal_file.msi": "71fa7ca57dd5f3b9a7cff6cad8084150a06feb0cc928927d09e7fc8d1bdda555",
+    "pyodide_module_overwrite.zip": "2205ab6ceaa4cde26c2b0a2efb00494e3a9e324afe7c230a093769139050b070",
+    "python_filename_injection.zip": "0b7cadbd424efaf422ca253f2b82110af9243402567cbb25af2b3ef1b7203ecd",
+    "python_table_name.msi": "8b7e2aacf6c5a38663ddb17cda55d88c157a488b109d7e93f6c318249c912279"
+  }
+}

@@ -31,3 +31,16 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+
+  viewer-security:
+    name: Viewer security regressions
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: "22"
+    - name: Test viewer security regressions
+      run: node --test tests/security/test_msi_viewer_security.mjs

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Id="{94AD1E9D-53E6-4AB5-A6C8-3B66E2484294}"
+    Name="pymsi Security Regression Fixture"
+    Language="1033"
+    Version="1.0.0"
+    Manufacturer="pymsi"
+    UpgradeCode="{099E2987-02DE-4613-81C6-0186787570CC}"
+  >
+    <Package
+      Id="{C5C361B9-B656-43A1-95FA-79513E6777E9}"
+      InstallerVersion="200"
+      Compressed="yes"
+      InstallScope="perUser"
+      Description="Inert pymsi security regression fixture"
+    />
+
+    <Media Id="1" Cabinet="fixture.cab" EmbedCab="yes" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="INSTALLDIR" Name="pymsi-security-fixture" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="INSTALLDIR">
+      <Component
+        Id="FixtureComponent"
+        Guid="{26EA29E6-38ED-4E65-B057-F6AAEE8B6D7E}"
+      >
+        <File Id="FixturePayload" Source="payload.txt" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="FixtureFeature" Title="Security regression fixture" Level="1">
+      <ComponentRef Id="FixtureComponent" />
+    </Feature>
+  </Product>
+</Wix>
+

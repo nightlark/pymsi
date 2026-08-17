@@ -250,6 +250,9 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
+# Keep deliberately bounded security regression installers under version control.
+!tests/security/fixtures/generated/*.msi
+
 # Windows shortcuts
 *.lnk
 
