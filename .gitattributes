@@ -1,1 +1,2 @@
 .git_archival.txt  export-subst
+tests/security/fixtures/payload.txt text eol=lf
