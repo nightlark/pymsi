@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Basic Example (12KB)",
+    "filename": "example.msi",
+    "url": "_static/example.msi"
+  },
+  {
+    "name": "7-Zip 25.01 (2MB)",
+    "filename": "7z2501-x64.msi",
+    "url": "_static/7z2501-x64.msi"
+  },
+  {
+    "name": "\"Malicious\" Run calc Custom Action Example from msidump (32KB)",
+    "filename": "sample4-customaction-run-calc.msi",
+    "url": "_static/sample4-customaction-run-calc.msi"
+  },
+  {
+    "name": "PowerToys v0.21.1 (20MB)",
+    "filename": "PowerToysSetup-0.21.1-x64.msi",
+    "url": "_static/PowerToysSetup-0.21.1-x64.msi"
+  }
+]

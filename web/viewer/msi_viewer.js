@@ -1,15 +1,57 @@
 // MSI Viewer JavaScript Implementation
 
+const PYMSI_VIEWER_DEFAULT_CONFIG = Object.freeze({
+  pyodideIndexURL: null,
+  pymsiPackages: ['pymsi>=0.0.0rc1'],
+  installPackageDependencies: true,
+  examplesIndexURL: '_static/examples.json',
+  fallbackExamples: [
+    { name: 'Basic Example (example.msi)', url: '_static/example.msi', filename: 'example.msi' }
+  ],
+  sqlJsWasmURL: 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm'
+});
+
+function getMSIViewerConfig() {
+  const supplied = window.PYMSI_VIEWER_CONFIG || {};
+  return {
+    ...PYMSI_VIEWER_DEFAULT_CONFIG,
+    ...supplied,
+    pymsiPackages: Array.isArray(supplied.pymsiPackages)
+      ? [...supplied.pymsiPackages]
+      : [...PYMSI_VIEWER_DEFAULT_CONFIG.pymsiPackages],
+    fallbackExamples: Array.isArray(supplied.fallbackExamples)
+      ? supplied.fallbackExamples.map(example => ({ ...example }))
+      : PYMSI_VIEWER_DEFAULT_CONFIG.fallbackExamples.map(example => ({ ...example }))
+  };
+}
+
+function resolveViewerURL(value) {
+  if (!value) return value;
+  try {
+    return new URL(value, document.baseURI).href;
+  } catch (error) {
+    console.warn(`Could not resolve viewer URL: ${value}`, error);
+    return value;
+  }
+}
+
+function resolvePackageTarget(target) {
+  if (typeof target === 'string' && /\.whl(?:[?#]|$)/i.test(target)) {
+    return resolveViewerURL(target);
+  }
+  return target;
+}
+
 // Main class for the MSI Viewer application
 class MSIViewer {
   constructor() {
+    this.config = getMSIViewerConfig();
     this.pyodide = null;
     this.pymsi = null;
     this.currentPackage = null;
     this.currentMsi = null;
     this.currentFileName = null;
     this.initElements();
-    this.initReadTheDocsFlyoutOverlapGuard();
     this.initEventListeners();
     this.loadPyodide();
   }
@@ -413,132 +455,6 @@ class MSIViewer {
     }
   }
 
-  // Hide Read the Docs' floating flyout whenever it would cover the viewer.
-  initReadTheDocsFlyoutOverlapGuard() {
-    const viewer = document.getElementById('msi-viewer-app');
-    if (!viewer) return;
-
-    let animationFrame = null;
-    let flyout = null;
-    let flyoutBox = null;
-    let shadowObserver = null;
-
-    const resizeObserver = typeof ResizeObserver === 'undefined'
-      ? null
-      : new ResizeObserver(scheduleUpdate);
-
-    function rectanglesOverlap(first, second) {
-      return (
-        first.width > 0 &&
-        first.height > 0 &&
-        second.width > 0 &&
-        second.height > 0 &&
-        first.left < second.right &&
-        first.right > second.left &&
-        first.top < second.bottom &&
-        first.bottom > second.top
-      );
-    }
-
-    function setFlyoutBox(nextBox) {
-      if (nextBox === flyoutBox) return;
-
-      if (flyoutBox && resizeObserver) {
-        resizeObserver.unobserve(flyoutBox);
-      }
-      flyoutBox = nextBox;
-      if (flyoutBox && resizeObserver) {
-        resizeObserver.observe(flyoutBox);
-      }
-    }
-
-    function bindFlyout() {
-      const nextFlyout = document.querySelector('readthedocs-flyout');
-      if (nextFlyout !== flyout) {
-        setFlyoutBox(null);
-        if (shadowObserver) {
-          shadowObserver.disconnect();
-          shadowObserver = null;
-        }
-        flyout = nextFlyout;
-      }
-
-      if (!flyout) return;
-
-      const shadowRoot = flyout.shadowRoot;
-      if (shadowRoot && !shadowObserver) {
-        shadowObserver = new MutationObserver(() => {
-          bindFlyout();
-          scheduleUpdate();
-        });
-        shadowObserver.observe(shadowRoot, {
-          attributes: true,
-          attributeFilter: ['class', 'style'],
-          childList: true,
-          subtree: true,
-        });
-      }
-
-      setFlyoutBox(
-        shadowRoot?.querySelector('.container') ||
-        shadowRoot?.firstElementChild ||
-        flyout
-      );
-    }
-
-    function update() {
-      animationFrame = null;
-      bindFlyout();
-      if (!flyout) return;
-
-      let overlaps = viewer.classList.contains('fullscreen-mode');
-      if (!overlaps && flyoutBox) {
-        overlaps = rectanglesOverlap(
-          viewer.getBoundingClientRect(),
-          flyoutBox.getBoundingClientRect()
-        );
-      }
-      flyout.toggleAttribute('data-pymsi-overlaps-viewer', overlaps);
-    }
-
-    function scheduleUpdate() {
-      if (animationFrame !== null) return;
-      animationFrame = window.requestAnimationFrame(update);
-    }
-
-    if (resizeObserver) {
-      resizeObserver.observe(viewer);
-    }
-
-    // Read the Docs injects the flyout as a direct child of <body>.
-    const bodyObserver = new MutationObserver(() => {
-      bindFlyout();
-      scheduleUpdate();
-    });
-    bodyObserver.observe(document.body, { childList: true });
-
-    window.addEventListener('resize', scheduleUpdate, { passive: true });
-    window.addEventListener('scroll', scheduleUpdate, {
-      capture: true,
-      passive: true,
-    });
-    document.addEventListener(
-      'readthedocs-addons-data-ready',
-      scheduleUpdate
-    );
-
-    if (window.customElements) {
-      window.customElements.whenDefined('readthedocs-flyout').then(() => {
-        bindFlyout();
-        scheduleUpdate();
-      });
-    }
-
-    this.scheduleReadTheDocsFlyoutVisibilityUpdate = scheduleUpdate;
-    bindFlyout();
-    scheduleUpdate();
-  }
-
   // Toggle fullscreen mode
   toggleFullscreen() {
     const app = document.getElementById('msi-viewer-app');
@@ -573,9 +489,6 @@ class MSIViewer {
       this.fullscreenToggle.innerHTML = '<span class="icon">⛶</span> Fullscreen';
     }
 
-    if (this.scheduleReadTheDocsFlyoutVisibilityUpdate) {
-      this.scheduleReadTheDocsFlyoutVisibilityUpdate();
-    }
   }
 
   // Switch between tabs
@@ -596,22 +509,37 @@ class MSIViewer {
     this.loadingIndicator.textContent = 'Loading Pyodide...';
 
     try {
-      // Pyodide should already be loaded from the script in the HTML
+      // Pyodide should already be loaded from the script in the HTML.
       if (typeof loadPyodide === 'undefined') {
-        throw new Error('Pyodide is not loaded. Please check your internet connection.');
+        throw new Error('Pyodide is not loaded. Check the viewer asset configuration.');
       }
 
-      this.pyodide = await loadPyodide();
+      const loadOptions = {};
+      if (this.config.pyodideIndexURL) {
+        const indexURL = resolveViewerURL(this.config.pyodideIndexURL);
+        loadOptions.indexURL = indexURL.endsWith('/') ? indexURL : `${indexURL}/`;
+      }
+
+      this.pyodide = await loadPyodide(loadOptions);
       if (!this.pyodide) {
         throw new Error('loadPyodide() failed.');
       }
 
       this.loadingIndicator.textContent = 'Loading pymsi...';
 
-      // Install pymsi using micropip
-      await this.pyodide.loadPackagesFromImports('import micropip');
+      // Install pymsi from PyPI or from the locally bundled wheels.
+      await this.pyodide.loadPackage('micropip');
       const micropip = this.pyodide.pyimport('micropip');
-      await micropip.install('pymsi>=0.0.0rc1');
+      const packageTargets = this.config.pymsiPackages.map(resolvePackageTarget);
+      const installTarget = packageTargets.length === 1 ? packageTargets[0] : packageTargets;
+      if (this.config.installPackageDependencies === false) {
+        await micropip.install.callKwargs(installTarget, { deps: false });
+      } else {
+        await micropip.install(installTarget);
+      }
+      if (typeof micropip.destroy === 'function') {
+        micropip.destroy();
+      }
 
       // Import pymsi
       await this.pyodide.runPythonAsync(`
@@ -636,9 +564,13 @@ class MSIViewer {
       // Enable file input and load example button after successful initialization
       this.fileInput.disabled = false;
       this.loadExampleFileButton.disabled = false;
+      window.dispatchEvent(new CustomEvent('pymsi-viewer-ready', { detail: { viewer: this } }));
     } catch (error) {
       this.loadingIndicator.textContent = `Error loading Pyodide or pymsi: ${error.message}`;
       console.error('Error initializing:', error);
+      window.dispatchEvent(new CustomEvent('pymsi-viewer-error', {
+        detail: { phase: 'initialization', error }
+      }));
       // Keep buttons disabled if loading fails
     }
   }
@@ -725,6 +657,9 @@ class MSIViewer {
       this.currentFileDisplay.style.display = 'block';
 
       this.loadingIndicator.style.display = 'none';
+      window.dispatchEvent(new CustomEvent('pymsi-viewer-msi-loaded', {
+        detail: { viewer: this, filename: this.currentFileName }
+      }));
     } catch (error) {
       console.error('Error processing MSI:', error);
 
@@ -764,6 +699,14 @@ class MSIViewer {
           : errorMessage;
         this.loadingIndicator.textContent = `Error processing MSI file: ${displayMessage}`;
       }
+
+      window.dispatchEvent(new CustomEvent('pymsi-viewer-error', {
+        detail: {
+          phase: 'msi-processing',
+          error,
+          filename: this.currentFileName
+        }
+      }));
     }
   }
 
@@ -1009,21 +952,21 @@ class MSIViewer {
     this.loadingIndicator.style.display = 'block';
 
     // Default fallback
-    let examples = [
-      { name: 'Basic Example (example.msi)', url: '_static/example.msi', filename: 'example.msi' }
-    ];
+    let examples = this.config.fallbackExamples.map(example => ({ ...example }));
 
     // Try to load the dynamic index generated by the build process
-    try {
-        const indexResponse = await fetch('_static/examples.json');
+    if (this.config.examplesIndexURL) {
+      try {
+        const indexResponse = await fetch(resolveViewerURL(this.config.examplesIndexURL));
         if (indexResponse.ok) {
-            const loadedExamples = await indexResponse.json();
-            if (loadedExamples && loadedExamples.length > 0) {
-                examples = loadedExamples;
-            }
+          const loadedExamples = await indexResponse.json();
+          if (loadedExamples && loadedExamples.length > 0) {
+            examples = loadedExamples;
+          }
         }
-    } catch (e) {
-        console.warn('Failed to load example index, using default.', e);
+      } catch (error) {
+        console.warn('Failed to load example index, using default.', error);
+      }
     }
 
     this.loadingIndicator.style.display = 'none';
@@ -1038,7 +981,7 @@ class MSIViewer {
     this.loadingIndicator.style.display = 'block';
     this.loadingIndicator.textContent = `Fetching ${selectedExample.filename}...`;
     try {
-      const response = await fetch(selectedExample.url);
+      const response = await fetch(resolveViewerURL(selectedExample.url));
       if (!response.ok) throw new Error(`Failed to fetch example file (${response.status})`);
       const blob = await response.blob();
       // Create a proper File object
@@ -1666,7 +1609,9 @@ class MSIViewer {
     }
 
     const SQL = await initSqlJs({
-      locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
+      locateFile: file => file === 'sql-wasm.wasm'
+        ? resolveViewerURL(this.config.sqlJsWasmURL)
+        : resolveViewerURL(file)
     });
 
     const db = new SQL.Database();
@@ -1762,9 +1707,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if we're in the MSI viewer page
   console.log('Initializing MSI Viewer...');
   if (document.getElementById('msi-viewer-app')) {
-    // Pyodide is already loaded via the script in the HTML
+    // Pyodide is already loaded via the script in the HTML.
     setTimeout(() => {
-      new MSIViewer();
+      window.pymsiViewer = new MSIViewer();
     }, 100);
   } else {
     console.warn('MSI Viewer app not found in the DOM. Make sure you are on the correct page.');

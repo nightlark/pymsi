@@ -1,0 +1,101 @@
+name: Build web MSI viewer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+  release:
+    types: [published]
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/web-viewer.yml"
+      - ".readthedocs.yaml"
+      - "LICENSE"
+      - "NOTICE"
+      - "README.md"
+      - "docs/conf.py"
+      - "docs/msi_viewer.md"
+      - "docs/requirements.txt"
+      - "docs/_static/example.msi"
+      - "pyproject.toml"
+      - "src/**"
+      - "tools/build_web_viewer.py"
+      - "web/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Cache downloaded web viewer assets
+        uses: actions/cache@v5
+        with:
+          path: .cache/web-viewer
+          key: web-viewer-${{ runner.os }}-pyodide-0.29.1-jszip-3.10.1-sheetjs-0.20.2-sqljs-1.10.3-olefile-0.47
+
+      - name: Install build and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build pytest playwright -r docs/requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Build both standalone variants and the ReadTheDocs embed
+        run: python tools/build_web_viewer.py --target all
+
+      - name: Run build tests
+        run: pytest web/tests/test_web_viewer_build.py
+
+      - name: Smoke test the fully bundled viewer
+        run: python web/tests/smoke_viewer.py dist/web-viewer/pymsi-viewer-bundled
+
+      - name: Build documentation with the generated viewer embed
+        env:
+          PYMSI_DOCS_SKIP_EXTERNAL_EXAMPLES: "1"
+        run: sphinx-build -W --keep-going -b html docs docs/_build/html
+
+      - name: Upload viewer distributions
+        uses: actions/upload-artifact@v7
+        with:
+          name: pymsi-web-viewer-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            dist/web-viewer/pymsi-viewer-cdn.zip
+            dist/web-viewer/pymsi-viewer-bundled.zip
+
+  release-upload:
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download viewer distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: pymsi-web-viewer-${{ github.sha }}
+          path: dist/web-viewer
+
+      - name: Attach viewer distributions to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            dist/web-viewer/pymsi-viewer-cdn.zip \
+            dist/web-viewer/pymsi-viewer-bundled.zip \
+            --clobber

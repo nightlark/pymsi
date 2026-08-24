@@ -18,6 +18,8 @@ A pure Python library for reading and manipulating Windows Installer (MSI) files
 
 For a demo of what pymsi can do, check out the [online MSI viewer and file extractor](https://pymsi.readthedocs.io/en/latest/msi_viewer.html) on our ReadTheDocs site. It's like lessmsi, but runs fully client-side in your browser.
 
+To build a self-hosted copy of that viewer, including a fully bundled offline-runtime variant, see [web/README.md](web/README.md).
+
 For more in-depth documentation on pymsi usage and the API, see the [documentation](https://pymsi.readthedocs.io/en/latest/) (very early WIP).
 
 ### Installation

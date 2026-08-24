@@ -51,6 +51,40 @@ ogp_site_url = "https://pymsi.readthedocs.io/"
 ogp_image = "https://pymsi.readthedocs.io/en/latest/_static/pymsi_social_preview.jpg"
 ogp_description_length = 200
 
+
+# -- Generated MSI viewer assets ----------------------------------------------
+def build_web_viewer_assets(app):
+    """Generate the shared MSI viewer embed before Sphinx reads source files."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    repository_root = Path(app.confdir).parent
+    build_script = repository_root / "tools" / "build_web_viewer.py"
+    static_dir = Path(app.confdir) / "_static" / "msi_viewer"
+    expected_outputs = [
+        Path(app.confdir) / "_generated" / "msi_viewer_embed.html",
+        static_dir / "viewer-config.js",
+        static_dir / "msi_viewer.css",
+        static_dir / "msi_viewer.js",
+        static_dir / "msi_analysis.js",
+        static_dir / "msi_binary_viewer.js",
+        static_dir / "rtd.css",
+        static_dir / "rtd_integration.js",
+    ]
+    source_paths = [build_script, *(repository_root / "web" / "viewer").glob("*")]
+    newest_source = max(path.stat().st_mtime for path in source_paths if path.is_file())
+
+    if all(path.is_file() and path.stat().st_mtime >= newest_source for path in expected_outputs):
+        return
+
+    print("[pymsi] Generating MSI viewer documentation assets...")
+    subprocess.run(
+        [sys.executable, str(build_script), "--target", "rtd"],
+        cwd=repository_root,
+        check=True,
+    )
+
 # -- External Example Files Download -----------------------------------------
 # List of entries to download into _static/ directory during build.
 # Example: ["https://example.com/file1.msi", ["https://site.org/file2.zip", "custom_name.zip", "Friendly Name"]]
@@ -98,10 +132,13 @@ def download_external_files(app):
             }
         )
 
-    if EXTERNAL_EXAMPLES:
-        print(f"[pymsi] Processing {len(EXTERNAL_EXAMPLES)} external example files...")
+    skip_external = os.environ.get("PYMSI_DOCS_SKIP_EXTERNAL_EXAMPLES") == "1"
+    external_examples = [] if skip_external else EXTERNAL_EXAMPLES
 
-        for entry in EXTERNAL_EXAMPLES:
+    if external_examples:
+        print(f"[pymsi] Processing {len(external_examples)} external example files...")
+
+        for entry in external_examples:
             if isinstance(entry, (list, tuple)):
                 url, filename, name = entry
             else:
@@ -145,4 +182,5 @@ def download_external_files(app):
 
 
 def setup(app):
+    app.connect("builder-inited", build_web_viewer_assets)
     app.connect("builder-inited", download_external_files)

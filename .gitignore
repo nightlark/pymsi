@@ -267,3 +267,9 @@ $RECYCLE.BIN/
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
+
+# Generated browser MSI viewer outputs
+/.cache/web-viewer/
+/dist/web-viewer/
+/docs/_generated/msi_viewer_embed.html
+/docs/_static/msi_viewer/

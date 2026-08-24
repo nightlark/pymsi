@@ -1,0 +1,5 @@
+/* ReadTheDocs-only behavior. This file is not included in standalone builds. */
+readthedocs-flyout[data-pymsi-overlaps-viewer] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
