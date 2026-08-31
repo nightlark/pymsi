@@ -65,10 +65,7 @@ for action in analysis.custom_actions:
     if action.command:
         print("  command:", action.command)
     for finding in action.findings:
-        print(
-            f"  [{finding.review_priority} review] "
-            f"{finding.title}: {finding.detail}"
-        )
+        print(f"  [{finding.review_priority} review] {finding.title}: {finding.detail}")
 
 for search in analysis.registry_searches:
     print(search.properties, search.root, search.key, search.result_kind)
